@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atlas OS — Agência</title>
+    <!-- Fonts and Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="pipeline.css">
+</head>
+<body>
+
+    <!-- LOGIN SCREEN OVERLAY -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card">
+            <img src="img/logo.png" alt="Atlas OS Logo" class="login-logo" onerror="this.src='https://raw.githubusercontent.com/FortAwesome/Font-Awesome/6.x/svgs/solid/compass.svg'; this.style.filter='invert(1)'">
+            <h2 class="login-title">Atlas OS</h2>
+            <p class="login-subtitle">Sistema Operacional de Publicidade & Marketing</p>
+            
+            <form id="login-form" onsubmit="event.preventDefault(); handleManualLogin();">
+                <div class="form-group">
+                    <label for="login-email">E-mail corporativo</label>
+                    <input type="email" id="login-email" class="form-control" placeholder="nome@agencia.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-pass">Senha</label>
+                    <input type="password" id="login-pass" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="header-btn primary" style="width: 100%; justify-content: center; padding: 12px;">Entrar no Painel</button>
+            </form>
+
+            <div class="login-profiles-shortcut">
+                <p class="shortcut-title">Simular Acesso Rápido (Demo)</p>
+                <div class="shortcut-buttons">
+                    <button class="btn-shortcut" onclick="handleShortcutLogin('Gabi')">Gabi (Admin)</button>
+                    <button class="btn-shortcut" onclick="handleShortcutLogin('Lucas')">Lucas (Social Media)</button>
+                    <button class="btn-shortcut" onclick="handleShortcutLogin('Ana')">Ana (Designer)</button>
+                    <button class="btn-shortcut" onclick="handleShortcutLogin('Marina')">Marina (Revisora)</button>
+                    <button class="btn-shortcut" onclick="handleShortcutLogin('Client')">Portal do Cliente</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app-root">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div>
+                <div class="logo-container">
+                    <img src="img/logo.png" alt="Atlas Logo" onerror="this.style.display='none'">
+                    <span class="logo-title">Atlas OS</span>
+                </div>
+                <ul class="sidebar-menu">
+                    <li class="menu-item active" data-view="dashboard" onclick="switchView('dashboard')">
+                        <i class="fa-solid fa-chart-pie"></i> Dashboard
+                    </li>
+                    <li class="menu-item" data-view="clientes" onclick="switchView('clientes')">
+                        <i class="fa-solid fa-briefcase"></i> Clientes
+                    </li>
+                    <li class="menu-item" data-view="tarefas" onclick="switchView('tarefas')">
+                        <i class="fa-solid fa-list-check"></i> Tarefas
+                    </li>
+                    <li class="menu-item" data-view="correcoes" onclick="switchView('correcoes')">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Correções
+                    </li>
+                    <li class="menu-item" data-view="equipe" onclick="switchView('equipe')">
+                        <i class="fa-solid fa-users"></i> Equipe
+                    </li>
+                    <li class="menu-item" data-view="relatorios" onclick="switchView('relatorios')">
+                        <i class="fa-solid fa-chart-line"></i> Relatórios
+                    </li>
+                    <li class="menu-item" data-view="esteira" onclick="switchView('esteira')" style="border: 1px solid rgba(6,182,212,0.3); background: rgba(6,182,212,0.05); color: #22d3ee;">
+                        <i class="fa-solid fa-timeline"></i> Esteira
+                    </li>
+                    <li class="menu-item" data-view="atlas-ai" onclick="switchView('atlas-ai')" style="border: 1px solid rgba(139, 92, 246, 0.3); background-color: rgba(139, 92, 246, 0.05); color: #c084fc;">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Atlas AI
+                    </li>
+                    <li class="menu-item" data-view="client-portal" id="menu-client-portal" onclick="switchView('client-portal')" style="display: none;">
+                        <i class="fa-solid fa-user-shield"></i> Portal do Cliente
+                    </li>
+                </ul>
+            </div>
+
+            <div class="sidebar-user">
+                <img id="current-user-avatar" src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80" alt="User Avatar">
+                <div class="user-info">
+                    <span id="current-user-name" class="user-name">Gabi</span>
+                    <span id="current-user-role" class="user-role">Administradora</span>
+                </div>
+                <button class="btn-logout" onclick="logout()" title="Sair do Sistema">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN WRAPPER -->
+        <div class="main-wrapper">
+            <!-- TOP BAR -->
+            <header class="header-top">
+                <div class="header-title-container">
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="openNewTaskModal()">
+                        <i class="fa-solid fa-plus"></i> Nova Demanda
+                    </button>
+                    <button class="header-btn primary" onclick="switchView('atlas-ai')">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Perguntar à IA
+                    </button>
+                </div>
+            </header>
+
+            <!-- VIEWPORT CONTENT -->
+            <main class="content-view">
+                
+                <!-- VIEW: DASHBOARD -->
+                <div id="view-dashboard" class="view-panel active">
+                    <!-- Metric Cards Row -->
+                    <div class="grid-metrics">
+                        <div class="metric-card green">
+                            <div class="metric-header">
+                                <span>Clientes Ativos</span>
+                                <i class="fa-solid fa-briefcase"></i>
+                            </div>
+                            <div class="metric-value" id="dash-active-clients">0</div>
+                            <div class="metric-sub">Todos em andamento</div>
+                        </div>
+                        <div class="metric-card blue">
+                            <div class="metric-header">
+                                <span>Tarefas Pendentes</span>
+                                <i class="fa-solid fa-list-check"></i>
+                            </div>
+                            <div class="metric-value" id="dash-pending-tasks">0</div>
+                            <div class="metric-sub">Nesta semana</div>
+                        </div>
+                        <div class="metric-card red">
+                            <div class="metric-header">
+                                <span>Atrasadas / Urgentes</span>
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </div>
+                            <div class="metric-value" id="dash-overdue-tasks">0</div>
+                            <div class="metric-sub">Exigem ação imediata</div>
+                        </div>
+                        <div class="metric-card purple">
+                            <div class="metric-header">
+                                <span>Correções Pendentes</span>
+                                <i class="fa-solid fa-screwdriver-wrench"></i>
+                            </div>
+                            <div class="metric-value" id="dash-pending-corrections">0</div>
+                            <div class="metric-sub">Aguardando time</div>
+                        </div>
+                        <div class="metric-card yellow">
+                            <div class="metric-header">
+                                <span>Aguardando Material</span>
+                                <i class="fa-solid fa-hourglass-start"></i>
+                            </div>
+                            <div class="metric-value" id="dash-awaiting-material">0</div>
+                            <div class="metric-sub">Gargalo do cliente</div>
+                        </div>
+                    </div>
+
+                    <!-- Split Layout -->
+                    <div class="dashboard-layout">
+                        <!-- Attention & Alerts List -->
+                        <div>
+                            <div class="section-card">
+                                <h2 class="section-title"><i class="fa-solid fa-triangle-exclamation" style="color: var(--status-yellow)"></i> Alertas e Gargalos da Operação</h2>
+                                <div class="attention-list" id="attention-list-container"></div>
+                            </div>
+
+                            <div class="section-card">
+                                <h2 class="section-title"><i class="fa-solid fa-calendar-day" style="color: var(--accent)"></i> Entregas Programadas para Hoje</h2>
+                                <div class="table-container">
+                                    <table class="custom-table">
+                                        <thead><tr><th>Tarefa / Demanda</th><th>Cliente</th><th>Responsável</th><th>Prioridade</th><th>Status</th></tr></thead>
+                                        <tbody id="today-deliveries-container"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- QUEUE SECTIONS -->
+                            <div class="dash-queues-grid">
+                                <div class="section-card" style="border-color: rgba(6,182,212,0.25);">
+                                    <div class="queue-section">
+                                        <div class="queue-section-title"><i class="fa-solid fa-magnifying-glass" style="color:#22d3ee"></i> Fila de Revisão <span id="review-queue-count" class="kanban-col-count">0</span></div>
+                                        <div class="queue-list" id="review-queue-list"><div style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px">Nenhuma entrega aguardando revisão</div></div>
+                                    </div>
+                                </div>
+                                <div class="section-card" style="border-color: rgba(139,92,246,0.25);">
+                                    <div class="queue-section">
+                                        <div class="queue-section-title"><i class="fa-solid fa-rocket" style="color:#c084fc"></i> Pronto para Postagem <span id="posting-queue-count" class="kanban-col-count">0</span></div>
+                                        <div class="queue-list" id="posting-queue-list"><div style="font-size:12px;color:var(--text-muted);text-align:center;padding:12px">Nenhum material pronto para postagem</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar -->
+                        <div>
+                            <div class="section-card" style="background: radial-gradient(circle at 100% 0%, rgba(139, 92, 246, 0.1) 0%, transparent 80%); border: 1px solid rgba(139, 92, 246, 0.2);">
+                                <h2 class="section-title" style="color: #c084fc;"><i class="fa-solid fa-wand-magic-sparkles"></i> Atlas AI - Operação</h2>
+                                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">"O sistema não serve apenas para cadastrar tarefas. Ele serve para mostrar exatamente o que está acontecendo na empresa sem precisar perguntar para ninguém."</p>
+                                <button class="header-btn primary" style="width: 100%; justify-content: center; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);" onclick="switchView('atlas-ai')">
+                                    <i class="fa-solid fa-bolt"></i> Abrir Painel de IA
+                                </button>
+                            </div>
+                            <div class="section-card">
+                                <h2 class="section-title"><i class="fa-solid fa-gauge-high"></i> Carga de Trabalho</h2>
+                                <div id="workload-summary-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: CLIENTS -->
+                <div id="view-clientes" class="view-panel">
+                    <div class="section-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h2 class="section-title" style="margin-bottom: 0;"><i class="fa-solid fa-briefcase"></i> Carteira de Clientes</h2>
+                            <button class="header-btn" onclick="openNewClientModal()">Novo Cliente</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome do Cliente</th>
+                                        <th>Serviço Contratado</th>
+                                        <th>Responsável</th>
+                                        <th>Status Geral</th>
+                                        <th>Andamento do Mês</th>
+                                        <th>Próxima Entrega</th>
+                                        <th>Pendência Atual</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clients-table-body">
+                                    <!-- Dynamic clients will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: CLIENT INDIVIDUAL DETAIL -->
+                <div id="view-cliente-detalhe" class="view-panel">
+                    <div style="display: flex; gap: 16px; margin-bottom: 16px; align-items: center;">
+                        <button class="header-btn" onclick="switchView('clientes')"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                        <h2 id="detail-client-name" style="font-size: 24px; font-weight: 700;">Nome do Cliente</h2>
+                        <span id="detail-client-status" class="badge em_dia">Em Dia</span>
+                    </div>
+
+                    <div class="grid-metrics" style="margin-bottom:14px">
+                        <div class="metric-card"><div class="metric-header">Contrato</div><div class="metric-value" style="font-size:16px;" id="detail-client-service">-</div></div>
+                        <div class="metric-card"><div class="metric-header">Progresso</div><div class="progress-container" style="width:100%;margin-top:8px;"><div class="progress-bar"><div id="detail-client-progress-bar" class="progress-fill" style="width:0%"></div></div><span id="detail-client-progress-val">0%</span></div></div>
+                        <div class="metric-card"><div class="metric-header">Próxima Entrega</div><div class="metric-value" style="font-size:16px;" id="detail-client-delivery">-</div></div>
+                        <div class="metric-card"><div class="metric-header">Atualizado</div><div class="metric-value" style="font-size:13px;color:var(--text-secondary);" id="detail-client-updated">-</div></div>
+                    </div>
+
+                    <!-- Client Tabs -->
+                    <div class="client-detail-tabs">
+                        <button class="client-tab-btn active" onclick="switchClientTab('tab-overview', this)"><i class="fa-solid fa-chart-pie"></i> Visão Geral</button>
+                        <button class="client-tab-btn" onclick="switchClientTab('tab-materials', this)"><i class="fa-solid fa-photo-film"></i> Materiais</button>
+                        <button class="client-tab-btn" onclick="switchClientTab('tab-pendings', this)"><i class="fa-solid fa-clock"></i> Pendências do Cliente</button>
+                        <button class="client-tab-btn" onclick="switchClientTab('tab-notes', this)"><i class="fa-solid fa-pen-to-square"></i> Notas</button>
+                    </div>
+
+                    <!-- Tab: Visão Geral -->
+                    <div id="tab-overview" class="client-tab-content active">
+                        <div class="dashboard-layout">
+                            <div>
+                                <div class="section-card">
+                                    <h3 class="section-title"><i class="fa-solid fa-route"></i> Workflow de Produção</h3>
+                                    <div class="timeline" id="client-timeline"></div>
+                                </div>
+                                <div class="section-card">
+                                    <h3 class="section-title"><i class="fa-solid fa-list-check"></i> Demandas Ativas</h3>
+                                    <div class="table-container">
+                                        <table class="custom-table">
+                                            <thead><tr><th>Título</th><th>Responsável</th><th>Setor</th><th>Prioridade</th><th>Prazo</th><th>Status</th></tr></thead>
+                                            <tbody id="client-tasks-table-body"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="section-card" style="border: 1px solid rgba(139,92,246,0.3); background: rgba(139,92,246,0.02);">
+                                    <h3 class="section-title" style="color:#c084fc;"><i class="fa-solid fa-wand-magic-sparkles"></i> Assistente AI</h3>
+                                    <div style="display:flex;flex-direction:column;gap:10px;">
+                                        <button class="header-btn" style="width:100%;border-color:rgba(139,92,246,0.4);" onclick="generateClientAISummary()"><i class="fa-solid fa-file-invoice"></i> Resumo do Cliente</button>
+                                        <button class="header-btn" style="width:100%;border-color:rgba(139,92,246,0.4);" onclick="generateClientAIMessage()"><i class="fa-solid fa-comment-sms"></i> Mensagem para Cliente</button>
+                                    </div>
+                                    <div id="client-ai-result-box" style="margin-top:14px;padding:10px;background:rgba(0,0,0,0.2);border-radius:var(--radius-sm);font-size:12px;display:none;white-space:pre-wrap;"></div>
+                                </div>
+                                <div class="section-card">
+                                    <h3 class="section-title"><i class="fa-solid fa-chart-simple"></i> Métricas & Cliques (Mês)</h3>
+                                    <div style="display:flex;flex-direction:column;gap:12px;" id="client-metrics-simulator"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Materiais -->
+                    <div id="tab-materials" class="client-tab-content">
+                        <div class="section-card">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                                <h3 class="section-title" style="margin:0"><i class="fa-solid fa-photo-film" style="color:#22d3ee"></i> Biblioteca de Materiais</h3>
+                                <div style="display:flex;gap:8px;">
+                                    <select id="material-filter-type" class="form-control" style="padding:6px;font-size:12px;width:130px;" onchange="renderClientMaterials(STATE.selectedClientId)">
+                                        <option value="all">Todos os tipos</option>
+                                        <option value="Arte para feed">Arte para feed</option>
+                                        <option value="Carrossel">Carrossel</option>
+                                        <option value="Vídeo editado">Vídeo editado</option>
+                                        <option value="Roteiro">Roteiro</option>
+                                        <option value="Link">Links</option>
+                                    </select>
+                                    <select id="material-filter-status" class="form-control" style="padding:6px;font-size:12px;width:130px;" onchange="renderClientMaterials(STATE.selectedClientId)">
+                                        <option value="all">Todos os status</option>
+                                        <option value="Aprovado">Aprovados</option>
+                                        <option value="Em análise">Em análise</option>
+                                        <option value="Finalizado">Finalizados</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="materials-grid" id="client-materials-grid"><p style="color:var(--text-muted);font-size:13px;">Nenhum material encontrado.</p></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Pendências do Cliente -->
+                    <div id="tab-pendings" class="client-tab-content">
+                        <div class="section-card">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                                <h3 class="section-title" style="margin:0"><i class="fa-solid fa-clock" style="color:#f59e0b"></i> O que o Cliente Precisa Enviar</h3>
+                                <button class="header-btn" onclick="openAddPendingModal()"><i class="fa-solid fa-plus"></i> Registrar Pendência</button>
+                            </div>
+                            <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Itens marcados como <strong>"Aguardando cliente"</strong> não contam como atraso da equipe.</p>
+                            <div class="pending-list" id="client-pendings-list"><p style="color:var(--text-muted);font-size:13px;">Nenhuma pendência registrada para este cliente.</p></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Notas -->
+                    <div id="tab-notes" class="client-tab-content">
+                        <div class="section-card">
+                            <h3 class="section-title"><i class="fa-solid fa-pen-to-square"></i> Observações Internas</h3>
+                            <textarea id="client-notes" class="form-control" style="min-height:160px;font-size:13px;" placeholder="Tom de voz, acessos, restrições..."></textarea>
+                            <button class="header-btn" style="margin-top:10px;width:100%;justify-content:center;" onclick="saveClientNotes()">Salvar Observações</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: TASKS -->
+                <div id="view-tarefas" class="view-panel">
+                    <div class="section-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                            <h2 class="section-title" style="margin-bottom: 0;"><i class="fa-solid fa-list-check"></i> Controle de Demandas</h2>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="task-filter-status" class="form-control" style="padding: 8px; width: 150px;" onchange="renderTasks()">
+                                    <option value="all">Todos os Status</option>
+                                    <option value="A fazer">A fazer</option>
+                                    <option value="Em andamento">Em andamento</option>
+                                    <option value="Aguardando material">Aguardando material</option>
+                                    <option value="Aguardando revisão">Aguardando revisão</option>
+                                    <option value="Em correção">Em correção</option>
+                                    <option value="Aprovado">Aprovado</option>
+                                    <option value="Publicado">Publicado</option>
+                                    <option value="Finalizado">Finalizado</option>
+                                    <option value="Atrasado">Atrasado</option>
+                                </select>
+                                <select id="task-filter-sector" class="form-control" style="padding: 8px; width: 130px;" onchange="renderTasks()">
+                                    <option value="all">Todos Setores</option>
+                                    <option value="Design">Design</option>
+                                    <option value="Social Media">Social Media</option>
+                                    <option value="Secretária">Secretária</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Demanda</th>
+                                        <th>Cliente</th>
+                                        <th>Responsável</th>
+                                        <th>Setor</th>
+                                        <th>Prioridade</th>
+                                        <th>Prazo</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tasks-table-body">
+                                    <!-- Dynamic tasks loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: ESTEIRA DE PRODUÇÃO -->
+                <div id="view-esteira" class="view-panel">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+                        <div>
+                            <h2 style="font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px;">
+                                <i class="fa-solid fa-timeline" style="color:#22d3ee"></i> Esteira de Produção
+                            </h2>
+                            <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Arraste os cards entre as colunas para mover as demandas entre as etapas do fluxo.</p>
+                        </div>
+                        <div class="kanban-filter-bar">
+                            <select id="kanban-filter-client" onchange="renderEsteira()">
+                                <option value="all">Todos os clientes</option>
+                            </select>
+                            <select id="kanban-filter-sector" onchange="renderEsteira()">
+                                <option value="all">Todos os setores</option>
+                                <option value="Design">Design</option>
+                                <option value="Social Media">Social Media</option>
+                                <option value="Secretária">Secretária</option>
+                            </select>
+                            <button class="header-btn" onclick="openNewTaskModal()"><i class="fa-solid fa-plus"></i> Nova Demanda</button>
+                        </div>
+                    </div>
+                    <div class="kanban-board" id="kanban-board"></div>
+                </div>
+
+                <!-- VIEW: CORRECTIONS -->
+                <div id="view-correcoes" class="view-panel">
+                    <div class="section-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h2 class="section-title" style="margin-bottom: 0;"><i class="fa-solid fa-screwdriver-wrench"></i> Central de Ajustes e Correções</h2>
+                            <button class="header-btn" onclick="openNewCorrectionModal()">Nova Correção</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="custom-table">
+                                <thead>
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Tarefa Referência</th>
+                                        <th>Correção Reclamada</th>
+                                        <th>Responsável</th>
+                                        <th>Prazo</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="corrections-table-body">
+                                    <!-- Dynamic corrections list -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: TEAM -->
+                <div id="view-equipe" class="view-panel">
+                    <div class="section-card">
+                        <h2 class="section-title"><i class="fa-solid fa-users"></i> Desempenho e Gargalos da Equipe</h2>
+                        <div class="team-grid" id="team-cards-grid">
+                            <!-- Team cards loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: REPORTS -->
+                <div id="view-relatorios" class="view-panel">
+                    <div class="section-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                            <h2 class="section-title" style="margin-bottom: 0;"><i class="fa-solid fa-chart-line"></i> Relatório de Resultados para Clientes</h2>
+                            <select id="report-client-selector" class="form-control" style="width: 220px;" onchange="loadReportData()">
+                                <!-- Client options loaded dynamically -->
+                            </select>
+                        </div>
+
+                        <div class="grid-metrics">
+                            <div class="metric-card green">
+                                <div class="metric-header">Novos Seguidores</div>
+                                <div class="metric-value" id="rep-followers">0</div>
+                                <div class="metric-sub">Este mês</div>
+                            </div>
+                            <div class="metric-card blue">
+                                <div class="metric-header">Alcance de Contas</div>
+                                <div class="metric-value" id="rep-reach">0</div>
+                                <div class="metric-sub">Impressões gerais</div>
+                            </div>
+                            <div class="metric-card purple">
+                                <div class="metric-header">Engajamento Médio</div>
+                                <div class="metric-value" id="rep-engagement">0%</div>
+                                <div class="metric-sub">Curtidas, comentários e salvos</div>
+                            </div>
+                            <div class="metric-card yellow">
+                                <div class="metric-header">Cliques no WhatsApp</div>
+                                <div class="metric-value" id="rep-clicks">0</div>
+                                <div class="metric-sub">Conversões diretas</div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-layout">
+                            <div class="section-card">
+                                <h3 class="section-title"><i class="fa-solid fa-file-signature"></i> Observações Estratégicas do Período</h3>
+                                <p id="rep-obs" style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);">
+                                    Selecione um cliente para carregar as métricas operacionais...
+                                </p>
+                            </div>
+                            <div class="section-card">
+                                <h3 class="section-title"><i class="fa-solid fa-trophy"></i> Melhor Campanha</h3>
+                                <div class="mini-card" style="border-left: 4px solid var(--status-green);">
+                                    <strong id="rep-best-campaign" style="font-size: 16px; color: var(--text-primary);">-</strong>
+                                    <span style="font-size: 12px; color: var(--text-muted);">Maior taxa de cliques do período</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: ATLAS AI -->
+                <div id="view-atlas-ai" class="view-panel">
+                    <div class="ai-intro">
+                        <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Atlas Inteligência Operacional</h2>
+                        <p style="color: var(--text-secondary); max-width: 700px; font-size: 14px; line-height: 1.6; margin-top: 10px;">
+                            Nosso assistente inteligente analisa dados em tempo real da sua operação. Ele localiza gargalos, ajuda você a redigir comunicações diretas para clientes ou equipes e envia resumos rápidos no WhatsApp.
+                        </p>
+                    </div>
+
+                    <div class="ai-grid">
+                        <!-- AI Options list -->
+                        <div class="ai-actions-panel">
+                            <div class="ai-action-card" onclick="runAIDaySummary()">
+                                <div class="ai-action-icon"><i class="fa-solid fa-calendar-day"></i></div>
+                                <div class="ai-action-details">
+                                    <h3>Gerar Resumo do Dia</h3>
+                                    <p>Visão geral da operação, clientes que precisam de atenção e prioridades urgentes.</p>
+                                </div>
+                            </div>
+
+                            <div class="ai-action-card" onclick="runAIWhatsAppSummary()">
+                                <div class="ai-action-icon"><i class="fa-brands fa-whatsapp" style="color: #25d366;"></i></div>
+                                <div class="ai-action-details">
+                                    <h3>Copiar Resumo para WhatsApp</h3>
+                                    <p>Gera um relatório formatado com emojis pronto para enviar para os gestores ou sócios.</p>
+                                </div>
+                            </div>
+
+                            <div class="ai-action-card">
+                                <div class="ai-action-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                                <div class="ai-action-details" style="width: 100%;">
+                                    <h3>Sugestões do Sistema (AI)</h3>
+                                    <div class="suggestions-list" id="ai-smart-suggestions">
+                                        <!-- Dynamic suggestions loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Screen Output -->
+                        <div class="ai-output-panel">
+                            <div class="ai-output-header">
+                                <span class="ai-output-title"><i class="fa-solid fa-terminal" style="color: var(--status-purple)"></i> Saída do Assistente</span>
+                                <button class="header-btn" id="ai-btn-copy" onclick="copyAIOutputText()" style="padding: 6px 12px; font-size: 12px; display: none;">
+                                    <i class="fa-solid fa-copy"></i> Copiar Texto
+                                </button>
+                            </div>
+                            <div class="ai-output-content" id="ai-output-content-box">
+                                <div class="ai-placeholder">
+                                    <i class="fa-solid fa-brain"></i>
+                                    <span>Selecione uma ação do Atlas AI para gerar o diagnóstico operacional.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: CLIENT PORTAL -->
+                <div id="view-client-portal" class="view-panel">
+                    <div class="section-card" style="background: radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 60%);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                            <h2 class="section-title" style="margin-bottom:0;"><i class="fa-solid fa-user-shield"></i> Portal de Acompanhamento do Cliente</h2>
+                            <span class="badge em_dia">Acesso Restrito</span>
+                        </div>
+                        <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px;">
+                            Bem-vindo ao seu painel operacional. Aqui você pode acompanhar as etapas do projeto, enviar materiais pendentes e verificar os resultados das campanhas.
+                        </p>
+
+                        <div class="grid-metrics">
+                            <div class="metric-card">
+                                <div class="metric-header">Seu Projeto</div>
+                                <div class="metric-value" style="font-size: 20px;" id="portal-client-name">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-header">Status Geral</div>
+                                <div class="metric-value" style="font-size: 20px;" id="portal-client-status">-</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-header">Materiais Pendentes</div>
+                                <div class="metric-value" style="font-size: 16px; color: var(--status-yellow);" id="portal-client-pendency">-</div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-layout">
+                            <div class="section-card">
+                                <h3 class="section-title"><i class="fa-solid fa-route"></i> Fluxo do seu Projeto</h3>
+                                <div class="timeline" id="portal-timeline">
+                                    <!-- Client Portal timeline -->
+                                </div>
+                            </div>
+                            <div class="section-card">
+                                <h3 class="section-title"><i class="fa-solid fa-circle-exclamation"></i> Enviar Material pendente</h3>
+                                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">Precisa enviar briefings, logos, fotos de novos produtos ou conteúdos?</p>
+                                <button class="header-btn primary" onclick="alert('Funcionalidade de upload simulada com sucesso para a apresentação da demo!')" style="width:100%; justify-content:center;">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Fazer Upload de Arquivo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL: WORKFLOW RULES WARNING -->
+    <div id="workflow-warning-modal" class="modal-overlay">
+        <div class="modal-card workflow-alert-card">
+            <div class="workflow-alert-icon">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h2 class="modal-header" style="justify-content: center; font-size: 20px; font-weight: 700; margin-bottom: 10px;">Publicação Bloqueada</h2>
+            <p style="text-align: center; color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+                Esta tarefa ainda precisa passar pela etapa de aprovação antes de ser publicada. O fluxo correto é:
+                <br><br>
+                <strong>Produção ➔ Revisão do Social Media ➔ Aprovação da Secretária ➔ Publicado</strong>
+            </p>
+            <button class="header-btn primary" style="width: 100%; justify-content: center;" onclick="closeWorkflowModal()">Entendi, seguir fluxo</button>
+        </div>
+    </div>
+
+    <!-- MODAL: NEW DEMANDA -->
+    <div id="new-task-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="font-size: 18px; font-weight: 600;">Adicionar Nova Demanda</h3>
+                <button class="modal-close" onclick="closeNewTaskModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="new-task-form" onsubmit="event.preventDefault(); handleCreateTask();">
+                <div class="form-group">
+                    <label>Título da Demanda</label>
+                    <input type="text" id="task-title" class="form-control" placeholder="Ex: Criar banner promocional" required>
+                </div>
+                <div class="form-group">
+                    <label>Cliente Vinculado</label>
+                    <select id="task-client" class="form-control" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Responsável</label>
+                    <select id="task-assignee" class="form-control" required></select>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Setor</label>
+                        <select id="task-sector" class="form-control" required>
+                            <option value="Design">Design</option>
+                            <option value="Social Media">Social Media</option>
+                            <option value="Secretária">Secretária</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Prioridade</label>
+                        <select id="task-priority" class="form-control" required>
+                            <option value="Baixa">Baixa</option>
+                            <option value="Média">Média</option>
+                            <option value="Alta">Alta</option>
+                            <option value="Urgente">Urgente</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Prazo de Entrega</label>
+                    <input type="date" id="task-due-date" class="form-control" required>
+                </div>
+                <button type="submit" class="header-btn primary" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;">Criar Demanda</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- TASK DETAIL SIDE PANEL -->
+    <div class="task-detail-modal" id="task-detail-modal" onclick="if(event.target===this)closeTaskDetail()">
+        <div class="task-detail-panel">
+            <div class="task-detail-header">
+                <div class="task-detail-header-left">
+                    <div class="task-detail-client-tag" id="td-client-name">CLIENTE</div>
+                    <div class="task-detail-title" id="td-task-title">Título da Tarefa</div>
+                </div>
+                <button class="task-detail-close" onclick="closeTaskDetail()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="task-detail-meta-bar" id="td-meta-bar"></div>
+            <div class="task-detail-tabs">
+                <div class="task-detail-tab active" onclick="switchTaskDetailTab('td-tab-details', this)"><i class="fa-solid fa-info-circle"></i> Detalhes</div>
+                <div class="task-detail-tab" onclick="switchTaskDetailTab('td-tab-deliveries', this)"><i class="fa-solid fa-paperclip"></i> Entregas <span class="task-detail-tab-count" id="td-delivery-count">0</span></div>
+                <div class="task-detail-tab" onclick="switchTaskDetailTab('td-tab-history', this)"><i class="fa-solid fa-clock-rotate-left"></i> Histórico</div>
+            </div>
+            <div class="task-detail-body">
+                <!-- Tab: Detalhes -->
+                <div id="td-tab-details" class="tab-content active">
+                    <div id="td-details-content"></div>
+                    <div class="section-divider">Comentários</div>
+                    <div id="td-comments-list"></div>
+                    <div style="display:flex;gap:8px;margin-top:12px;">
+                        <input type="text" id="td-new-comment" class="form-control" placeholder="Adicionar comentário..." style="flex:1;padding:8px 12px;font-size:12px;">
+                        <button class="header-btn primary" style="padding:8px 16px;font-size:12px;" onclick="addTaskDetailComment()"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+                <!-- Tab: Entregas -->
+                <div id="td-tab-deliveries" class="tab-content">
+                    <div id="td-deliveries-list"></div>
+                    <div class="add-delivery-form">
+                        <h4><i class="fa-solid fa-plus-circle"></i> Nova Entrega</h4>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div class="form-group">
+                                <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;display:block;">Tipo</label>
+                                <select id="new-delivery-type" class="form-control" style="padding:7px;font-size:12px;">
+                                    <option>Arte para feed</option><option>Carrossel</option><option>Reels</option>
+                                    <option>Vídeo editado</option><option>Roteiro</option><option>Legenda</option>
+                                    <option>Link do Canva</option><option>Link do Drive</option><option>Link do vídeo</option>
+                                    <option>Documento</option><option>Imagem</option><option>Outro</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;display:block;">Título</label>
+                                <input type="text" id="new-delivery-title" class="form-control" placeholder="Ex: Vídeo editado V2" style="padding:7px;font-size:12px;">
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top:8px;">
+                            <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;display:block;">Link do material</label>
+                            <input type="url" id="new-delivery-link" class="form-control" placeholder="https://drive.google.com/..." style="padding:7px;font-size:12px;">
+                        </div>
+                        <div class="form-group" style="margin-top:8px;">
+                            <label style="font-size:11px;color:var(--text-muted);margin-bottom:4px;display:block;">Observações</label>
+                            <textarea id="new-delivery-notes" class="form-control" placeholder="Descreva o que foi feito..." style="padding:7px;font-size:12px;min-height:60px;"></textarea>
+                        </div>
+                        <button class="header-btn primary" style="width:100%;justify-content:center;margin-top:10px;padding:10px;" onclick="addNewDelivery()"><i class="fa-solid fa-upload"></i> Registrar Entrega</button>
+                    </div>
+                </div>
+                <!-- Tab: Histórico -->
+                <div id="td-tab-history" class="tab-content">
+                    <div class="activity-log" id="td-activity-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORRECTION REQUEST MODAL -->
+    <div class="correction-modal-overlay" id="correction-request-modal" onclick="if(event.target===this)closeCorrectionRequestModal()">
+        <div class="correction-modal-box">
+            <h3><i class="fa-solid fa-rotate-left"></i> Solicitar Correção</h3>
+            <p>Descreva o que precisa ser corrigido nesta entrega. O card será movido para "Aguardando Correção".</p>
+            <input type="hidden" id="correction-delivery-id">
+            <div class="form-group">
+                <label style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;display:block;">O que precisa ser corrigido? *</label>
+                <textarea id="correction-description" class="form-control" style="min-height:100px;font-size:13px;" placeholder="Ex: Alterar a fonte do título, reduzir o tempo do vídeo para 30 segundos..." required></textarea>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+                <button class="header-btn" style="flex:1;justify-content:center;padding:10px;" onclick="closeCorrectionRequestModal()">Cancelar</button>
+                <button class="header-btn primary" style="flex:1;justify-content:center;padding:10px;background:var(--status-red);" onclick="submitCorrectionRequest()"><i class="fa-solid fa-paper-plane"></i> Enviar Correção</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DB Scripts and App Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="app.js"></script>
+    <script src="pipeline.js"></script>
+</body>
+</html>
+
