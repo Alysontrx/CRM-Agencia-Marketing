@@ -46,8 +46,8 @@ export const MOCK_CORRECOES: CorrecaoData[] = [
 ];
 
 export const MOCK_METRICAS: MetricaData[] = [
-  { id: 1, agencia_id: 1, cliente_id: 1, data_registro: '2026-01-01', seguidores: 3200, alcance: 8500, engajamento: 2.1, leads: 12, tipo: 'baseline' },
-  { id: 2, agencia_id: 1, cliente_id: 1, data_registro: '2026-06-30', seguidores: 6450, alcance: 61300, engajamento: 5.8, leads: 86, tipo: 'mensal', anotacao: 'Após campanha de inverno, alcance cresceu 620%' },
+  { id: 1, agencia_id: 1, cliente_id: 1, data_registro: '2026-01-01', seguidores: 3200, alcance: 8500, engajamento: 2.1, leads: 12, cliques_site: 0, tipo: 'baseline' },
+  { id: 2, agencia_id: 1, cliente_id: 1, data_registro: '2026-06-30', seguidores: 6450, alcance: 61300, engajamento: 5.8, leads: 86, cliques_site: 150, tipo: 'mensal', anotacao: 'Após campanha de inverno, alcance cresceu 620%' },
 ];
 
 export const MOCK_NOTIFICACOES: NotificacaoData[] = [

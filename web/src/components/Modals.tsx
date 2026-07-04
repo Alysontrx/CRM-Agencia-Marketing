@@ -533,9 +533,9 @@ export function ModalNovoUsuario({ isOpen, onClose, editData }: { isOpen: boolea
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editData) {
-      updateUser(editData.id, form);
+      updateUser(editData.id, form as any);
     } else {
-      addUser(form);
+      addUser(form as any);
     }
     onClose();
   };
