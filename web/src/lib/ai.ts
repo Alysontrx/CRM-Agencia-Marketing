@@ -13,7 +13,7 @@ export async function generateOnboardingTasks(
   }
 
   const prompt = `
-Você é um assistente sênior de agências de marketing e tecnologia (Sense AI).
+Você é um assistente sênior de agências de marketing e tecnologia.
 Um novo cliente acabou de fechar contrato.
 Cliente: ${clienteNome}
 Serviço contratado: ${servico}
@@ -68,7 +68,7 @@ Exemplo:
       status: 'A fazer'
     }));
   } catch (err) {
-    console.error('Falha ao gerar tarefas da Sense AI:', err);
+    console.error('Falha ao gerar tarefas da Inteligência Artificial:', err);
     return [];
   }
 }
@@ -217,7 +217,7 @@ export async function askCopilot(
 ): Promise<string> {
   if (!GROQ_API_KEY) return "Erro: Chave da Groq API não configurada.";
 
-  const systemPrompt = `Você é o "Sense Copilot", a Inteligência Artificial super avançada embutida no "Sense OS" (um CRM de agência de marketing de alto nível). 
+  const systemPrompt = `Você é o "Copilot Inteligente", a Inteligência Artificial super avançada embutida no CRM. 
 Você ajuda a equipe da agência (vendedores, designers, gestores) a tomar decisões rápidas e gerar conteúdo.
 Seja sempre direto, profissional e inspirador. Não dê respostas desnecessariamente longas a menos que peçam.
 
@@ -253,7 +253,7 @@ ${contextData}
 
     return data.choices?.[0]?.message?.content || 'Desculpe, não consegui processar a resposta.';
   } catch (err: any) {
-    console.error('Falha no Sense Copilot:', err);
+    console.error('Falha no Copilot:', err);
     throw err;
   }
 }

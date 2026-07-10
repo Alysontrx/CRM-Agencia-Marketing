@@ -2,12 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import PDFDocument from 'pdfkit';
 import { chromium } from 'playwright';
+import { createClient } from '@supabase/supabase-js';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const BREVO_API_KEY = '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';
+// Brevo API Key — preferência por variável de ambiente
+const BREVO_API_KEY = process.env.BREVO_API_KEY || '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';
+
+// Supabase Admin client (usa service role para reset de senha)
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL || '',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || ''
+);
 
 app.post('/api/webhook/asaas', express.json(), async (req, res) => {
   // Webhook logic
@@ -199,6 +207,38 @@ app.post('/api/send-email', async (req, res) => {
   } catch (error) {
     console.error('Erro ao enviar e-mail via Brevo:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/reset-password-request', async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email é obrigatório' });
+  }
+  try {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password`,
+    });
+    if (error) throw error;
+    res.status(200).json({ message: 'E‑mail de reset enviado' });
+  } catch (err) {
+    console.error('Erro ao solicitar reset de senha:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).json({ error: 'Token e nova senha são obrigatórios' });
+  }
+  try {
+    const { data, error } = await supabase.auth.api.updateUser(token, { password: newPassword });
+    if (error) throw error;
+    res.status(200).json({ message: 'Senha redefinida com sucesso' });
+  } catch (err) {
+    console.error('Erro ao redefinir senha:', err);
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -22,28 +22,44 @@ import ResultadosPage from './Resultados';
 import EquipePage from './Equipe';
 import CopilotPage from './Copilot';
 import ConteudoPage from './Conteudo';
+import EmployeeDashboard from './EmployeeDashboard';
 
-type Page = 'dashboard' | 'comercial' | 'kanban' | 'clientes' | 'resultados' | 'equipe' | 'copilot' | 'conteudo';
+import ClientePerfilPage from './ClientePerfil';
+import SuporteAgenciaPage from './SuporteAgencia';
+import ReunioesPage from './Reunioes';
+import VideoMakerDashboard from './VideoMakerDashboard';
+import SecretaryDashboard from './SecretaryDashboard';
+
+export type Page = 'dashboard' | 'comercial' | 'kanban' | 'reunioes' | 'clientes' | 'resultados' | 'equipe' | 'copilot' | 'conteudo' | 'cliente-perfil' | 'suporte' | 'employee_dashboard' | 'video_maker_dashboard' | 'secretary_dashboard';
 
 // ===== SIDEBAR =====
 function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page; setPage: (p: Page) => void; isMobileOpen: boolean; setIsMobileOpen: (v: boolean) => void }) {
-  const { currentUser, currentAgencia, logout, tarefas, correcoes } = useApp();
+  const { currentUser, logout, tarefas, correcoes } = useApp();
   const atrasadas = tarefas.filter(t => t.status === 'Atrasado').length;
   const pendentes = correcoes.filter(c => c.status === 'Pendente').length;
 
-  const isAdmin = currentUser?.funcao === 'Admin' || currentUser?.funcao === 'Secretária';
-  const isFuncionario = ['Designer', 'Social Media', 'Videomaker'].includes(currentUser?.funcao || '');
-  const isCliente = currentUser?.funcao === 'Cliente';
+  const f = currentUser?.funcao || '';
+  const isAdmin = f === 'Administrador' || f === 'Gerente' || f === 'Admin';
+  const isSecretaria = f === 'Secretária';
+  const isComercial = f === 'Comercial';
+  const isProdutor = ['Designer', 'Editor de Vídeo', 'Videomaker', 'Video Maker', 'Social Media', 'Desenvolvedor'].includes(f);
+  const isFinanceiro = f === 'Financeiro';
+  const isVideoMaker = ['Editor de Vídeo', 'Videomaker', 'Video Maker'].includes(f);
 
   const allNavItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', show: isAdmin },
-    { id: 'comercial', icon: DollarSign, label: 'Comercial (Leads)', show: isAdmin },
-    { id: 'kanban', icon: KanbanSquare, label: 'Esteira', badge: atrasadas || undefined, badgeColor: 'destructive', show: isAdmin || isFuncionario },
-    { id: 'conteudo', icon: Sparkles, label: 'Conteúdo (IA)', show: isAdmin || isFuncionario },
-    { id: 'clientes', icon: Users, label: 'Clientes', show: isAdmin },
-    { id: 'resultados', icon: TrendingUp, label: 'Antes × Depois', show: isAdmin || isCliente },
-    { id: 'copilot', icon: Sparkles, label: 'Sense Copilot', show: isAdmin || isFuncionario },
-    { id: 'equipe', icon: Settings, label: 'Equipe', badge: pendentes || undefined, badgeColor: 'warning', show: isAdmin || isFuncionario },
+    { id: 'comercial', icon: DollarSign, label: 'Comercial (Leads)', show: isAdmin || isComercial },
+    { id: 'employee_dashboard', icon: LayoutDashboard, label: 'Meu Dashboard', badge: atrasadas || undefined, badgeColor: 'destructive', show: !isAdmin && !isVideoMaker && !isSecretaria },
+    { id: 'secretary_dashboard', icon: LayoutDashboard, label: 'Central de Triagem', show: isSecretaria },
+    { id: 'video_maker_dashboard', icon: LayoutDashboard, label: 'Meu Estúdio', show: isVideoMaker },
+    { id: 'kanban', icon: KanbanSquare, label: isAdmin ? 'Tarefas' : 'Minhas Demandas', show: true },
+    { id: 'reunioes', icon: Clock, label: 'Reuniões', show: true },
+    { id: 'conteudo', icon: Sparkles, label: 'Conteúdo (IA)', show: isAdmin || isProdutor },
+    { id: 'clientes', icon: Users, label: 'Clientes', show: isAdmin || isSecretaria || isComercial || isFinanceiro },
+    { id: 'resultados', icon: TrendingUp, label: 'Antes × Depois', show: isAdmin },
+    { id: 'copilot', icon: Sparkles, label: 'Copilot', show: isAdmin || isProdutor },
+    { id: 'equipe', icon: Settings, label: 'Equipe', badge: pendentes || undefined, badgeColor: 'warning', show: isAdmin },
+    { id: 'suporte', icon: MessageSquare, label: 'Suporte Técnico', show: true },
   ];
 
   const navItems = allNavItems.filter(item => item.show);
@@ -63,12 +79,8 @@ function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page;
         transform transition-transform duration-300 ease-in-out
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-      <div className="flex items-center justify-center p-4 min-h-[64px] border-b border-zinc-800/50">
-        <img 
-          src={currentAgencia?.logo_url || '/logo.png'} 
-          alt={currentAgencia?.nome || "Logo da Agência"} 
-          className="w-full max-w-[200px] h-auto max-h-16 object-contain drop-shadow-md brightness-0 invert scale-125" 
-        />
+      <div className="flex items-center justify-center p-5 min-h-[80px] border-b border-zinc-800/50">
+        <img src="/logo.png" alt="Sense CRM" className="w-full max-w-[150px] h-auto object-contain brightness-0 invert opacity-90 hover:opacity-100 transition-opacity" />
       </div>
       
       <div className="p-4 flex-1 overflow-y-auto">
@@ -120,12 +132,18 @@ function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page;
 const PAGE_TITLES: Record<Page, { title: string; subtitle: string }> = {
   dashboard: { title: 'Dashboard', subtitle: 'Visão geral da operação em tempo real' },
   comercial: { title: 'Pipeline Comercial', subtitle: 'Acompanhamento de novos leads e negociações' },
-  kanban: { title: 'Esteira Operacional', subtitle: 'Gerencie o fluxo de produção com Drag & Drop' },
+  kanban: { title: 'Tarefas', subtitle: 'Acompanhe as tarefas de produção e entregas' },
   clientes: { title: 'Clientes', subtitle: 'Gerencie todos os clientes da agência' },
   resultados: { title: 'Antes × Depois', subtitle: 'Demonstre o impacto do seu trabalho com dados' },
   copilot: { title: 'Sense Copilot', subtitle: 'Seu assistente IA conectado aos dados da agência' },
   equipe: { title: 'Equipe', subtitle: 'Performance e tarefas dos colaboradores' },
   conteudo: { title: 'Estúdio de Conteúdo', subtitle: 'Fábrica de ideias, roteiros e legendas com IA' },
+  'cliente-perfil': { title: 'Perfil do Cliente', subtitle: 'Visão 360 do cliente' },
+  suporte: { title: 'Suporte Técnico', subtitle: 'Fale com a equipe de suporte da plataforma' },
+  employee_dashboard: { title: 'Meu Dashboard', subtitle: 'Foco na sua execução de hoje' },
+  video_maker_dashboard: { title: 'Estúdio de Produção', subtitle: 'Central de Audiovisual' },
+  secretary_dashboard: { title: 'Central de Triagem', subtitle: 'Visão de atendimentos rápidos e agenda' },
+  reunioes: { title: 'Agenda & Reuniões', subtitle: 'Gerencie seus compromissos e videoconferências' },
 };
 
 function Topbar({ page, onNewTask, onOpenSearch, onToggleMenu }: { page: Page; onNewTask: () => void; onOpenSearch: () => void; onToggleMenu: () => void }) {
@@ -210,7 +228,7 @@ function Topbar({ page, onNewTask, onOpenSearch, onToggleMenu }: { page: Page; o
           </AnimatePresence>
         </div>
 
-        {useApp().currentUser?.funcao !== 'Cliente' && (
+        {['Administrador', 'Gerente', 'Admin'].includes(useApp().currentUser?.funcao || '') && (
           <Button onClick={onNewTask} className="h-9 bg-zinc-100 text-zinc-900 hover:bg-zinc-200">
             <Plus className="w-4 h-4 mr-1.5" />
             Nova Tarefa
@@ -229,19 +247,32 @@ export default function MainLayout() {
   // Set initial page based on role
   const getInitialPage = (): Page => {
     if (!currentUser) return 'dashboard';
-    if (['Admin', 'Secretária'].includes(currentUser.funcao)) return 'dashboard';
-    if (currentUser.funcao === 'Cliente') return 'resultados';
-    return 'kanban';
+    if (['Administrador', 'Gerente', 'Admin'].includes(currentUser.funcao)) return 'dashboard';
+    if (['Editor de Vídeo', 'Videomaker', 'Video Maker'].includes(currentUser.funcao)) return 'video_maker_dashboard';
+    if (currentUser.funcao === 'Secretária') return 'secretary_dashboard';
+    return 'employee_dashboard';
   };
 
   const [page, setPage] = useState<Page>(getInitialPage());
+  const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const [modalNovaTarefa, setModalNovaTarefa] = useState(false);
-  const [modalNovoCliente, setModalNovoCliente] = useState(false);
-  const [modalNovaMetrica, setModalNovaMetrica] = useState(false);
-  const [modalNovoLead, setModalNovoLead] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  
+  const [impersonation, setImpersonation] = useState<any>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('@atlas_impersonation');
+    if (token) {
+      setImpersonation(JSON.parse(token));
+    }
+  }, []);
+
+  const handleExitImpersonation = () => {
+    localStorage.removeItem('@atlas_impersonation');
+    window.location.href = '/atlas-admin/agencias';
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -260,22 +291,44 @@ export default function MainLayout() {
         page={page} 
         setPage={(p) => {
           setPage(p);
+          if (p !== 'cliente-perfil') setSelectedClienteId(null);
           setIsMobileOpen(false);
         }} 
         isMobileOpen={isMobileOpen}
         setIsMobileOpen={setIsMobileOpen}
       />
       <div className="flex-1 flex flex-col overflow-hidden relative">
+        {impersonation && (
+          <div className="bg-rose-600 text-white px-4 py-2 flex items-center justify-between z-50">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm font-bold">Você está acessando esta conta como Administrador da Plataforma Sense.</span>
+            </div>
+            <Button 
+              size="sm" 
+              onClick={handleExitImpersonation}
+              className="bg-black/20 hover:bg-black/40 border border-white/20 text-white h-7 text-xs"
+            >
+              Voltar para o Painel da Sense
+            </Button>
+          </div>
+        )}
         <Topbar page={page} onNewTask={() => setModalNovaTarefa(true)} onOpenSearch={() => setIsSearchOpen(true)} onToggleMenu={() => setIsMobileOpen(!isMobileOpen)} />
-        <main className="flex-1 flex flex-col overflow-y-auto p-6 scroll-smooth">
-          {page === 'dashboard' && <DashboardPage />}
+        <main className="flex-1 flex flex-col overflow-y-auto p-6 scroll-smooth bg-zinc-950">
+          {page === 'dashboard' && <DashboardPage onNavigate={(p: string) => setPage(p as Page)} />}
+          {page === 'employee_dashboard' && <EmployeeDashboard />}
+          {page === 'video_maker_dashboard' && <VideoMakerDashboard />}
+          {page === 'secretary_dashboard' && <SecretaryDashboard />}
           {page === 'comercial' && <ComercialPage />}
           {page === 'kanban' && <KanbanPage />}
-          {page === 'clientes' && <ClientesPage />}
+          {page === 'reunioes' && <ReunioesPage />}
+          {page === 'clientes' && <ClientesPage onNavigateToPerfil={(id) => { setSelectedClienteId(id); setPage('cliente-perfil'); }} />}
           {page === 'resultados' && <ResultadosPage />}
           {page === 'copilot' && <CopilotPage />}
           {page === 'equipe' && <EquipePage />}
           {page === 'conteudo' && <ConteudoPage />}
+          {page === 'cliente-perfil' && selectedClienteId && <ClientePerfilPage clienteId={selectedClienteId} onBack={() => { setPage('clientes'); setSelectedClienteId(null); }} />}
+          {page === 'suporte' && <SuporteAgenciaPage />}
         </main>
       </div>
 

@@ -114,7 +114,7 @@ export function ModalNovaTarefa({ isOpen, onClose, editData }: { isOpen: boolean
           <label className="text-sm font-medium text-zinc-300">Responsável</label>
           <select className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.responsavel_id} onChange={e => setForm({...form, responsavel_id: e.target.value})}>
             <option value="">Atribuir a...</option>
-            {users.filter(u => u.funcao !== 'Cliente').map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+            {users.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
           </select>
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -182,7 +182,7 @@ export function ModalNovaTarefa({ isOpen, onClose, editData }: { isOpen: boolean
 
 export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolean; onClose: () => void, editData?: ClienteData }) {
   const { users, addCliente, updateCliente } = useApp();
-  const [form, setForm] = useState({ nome: '', servico: '', responsavel_id: '', logo: '', mrr: '', dia_pagamento: '', whatsapp: '', instagram_url: '', entregas_mensais: '' });
+  const [form, setForm] = useState({ nome: '', servico: '', responsavel_id: '', logo: '', mrr: '', dia_pagamento: '', whatsapp: '', instagram_url: '', entregas_mensais: '', nicho: '' });
 
   React.useEffect(() => {
     if (editData) {
@@ -195,10 +195,11 @@ export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolea
         dia_pagamento: editData.dia_pagamento ? editData.dia_pagamento.toString() : '',
         whatsapp: editData.whatsapp || '',
         instagram_url: editData.instagram_url || '',
-        entregas_mensais: editData.entregas_mensais ? editData.entregas_mensais.toString() : ''
+        entregas_mensais: editData.entregas_mensais ? editData.entregas_mensais.toString() : '',
+        nicho: editData.nicho || ''
       });
     } else {
-      setForm({ nome: '', servico: '', responsavel_id: '', logo: '', mrr: '', dia_pagamento: '', whatsapp: '', instagram_url: '', entregas_mensais: '' });
+      setForm({ nome: '', servico: '', responsavel_id: '', logo: '', mrr: '', dia_pagamento: '', whatsapp: '', instagram_url: '', entregas_mensais: '', nicho: '' });
     }
   }, [editData, isOpen]);
 
@@ -227,7 +228,8 @@ export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolea
         whatsapp: form.whatsapp || undefined,
         logo: form.logo || undefined,
         instagram_url: form.instagram_url || undefined,
-        entregas_mensais: form.entregas_mensais ? parseInt(form.entregas_mensais) : 0
+        entregas_mensais: form.entregas_mensais ? parseInt(form.entregas_mensais) : 0,
+        nicho: form.nicho || undefined
       });
     } else {
       addCliente({
@@ -239,7 +241,8 @@ export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolea
         dia_pagamento: form.dia_pagamento ? parseInt(form.dia_pagamento) : undefined,
         whatsapp: form.whatsapp || undefined,
         instagram_url: form.instagram_url || undefined,
-        entregas_mensais: form.entregas_mensais ? parseInt(form.entregas_mensais) : 0
+        entregas_mensais: form.entregas_mensais ? parseInt(form.entregas_mensais) : 0,
+        nicho: form.nicho || undefined
       });
     }
     onClose();
@@ -253,6 +256,12 @@ export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolea
             <label className="text-sm font-medium text-zinc-300">Nome da Empresa</label>
             <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.nome} onChange={e => setForm({...form, nome: e.target.value})} />
           </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-300">Nicho / Área de Atuação</label>
+            <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={form.nicho} onChange={e => setForm({...form, nicho: e.target.value})} placeholder="Ex: Tecnologia, Saúde" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">WhatsApp (Cobrança)</label>
             <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={form.whatsapp} onChange={e => setForm({...form, whatsapp: e.target.value})} placeholder="Ex: 11999999999" />
@@ -295,7 +304,7 @@ export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolea
           <label className="text-sm font-medium text-zinc-300">Gestor de Conta (Responsável)</label>
           <select className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.responsavel_id} onChange={e => setForm({...form, responsavel_id: e.target.value})}>
             <option value="">Selecione o gestor...</option>
-            {users.filter(u => u.funcao !== 'Cliente').map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+            {users.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
           </select>
         </div>
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-800">
@@ -549,7 +558,7 @@ export function ModalNovoUsuario({ isOpen, onClose, editData }: { isOpen: boolea
         </div>
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-zinc-300">E-mail</label>
-          <input type="email" className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="exemplo@sense.com" />
+          <input type="email" className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="exemplo@agencia.com" />
         </div>
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-zinc-300">Função / Cargo</label>
@@ -576,6 +585,125 @@ export function ModalNovoUsuario({ isOpen, onClose, editData }: { isOpen: boolea
         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-800">
           <button type="button" className="px-4 py-2 text-sm font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors" onClick={onClose}>Cancelar</button>
           <button type="submit" className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all">{editData ? 'Salvar Alterações' : 'Adicionar Funcionário'}</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+export function ModalNovaReuniao({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { clientes, addTarefa, currentUser } = useApp();
+  const [form, setForm] = useState({ titulo: '', cliente_id: '', data: '', hora: '', link: '' });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.titulo || !form.data || !form.hora || !currentUser) return;
+    
+    // Create valid ISO timestamp
+    let finalPrazo = `${form.data}T${form.hora}:00`;
+    try {
+      finalPrazo = new Date(`${form.data}T${form.hora}:00`).toISOString();
+    } catch(e) {}
+
+    addTarefa({
+      titulo: `Reunião: ${form.titulo} ${form.link ? `(${form.link})` : ''}`,
+      cliente_id: form.cliente_id ? parseInt(form.cliente_id) : undefined,
+      responsavel_id: currentUser.id,
+      setor: 'Reunião',
+      prioridade: 'Alta',
+      prazo: finalPrazo,
+      status: 'A fazer'
+    });
+    setForm({ titulo: '', cliente_id: '', data: '', hora: '', link: '' });
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Agendar Reunião">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-zinc-300">Título / Pauta</label>
+          <input required type="text" value={form.titulo} onChange={e => setForm({...form, titulo: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100" placeholder="Ex: Alinhamento de Metas" />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-zinc-300">Cliente (Opcional)</label>
+          <select value={form.cliente_id} onChange={e => setForm({...form, cliente_id: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100">
+            <option value="">Sem cliente (Reunião Interna)</option>
+            {clientes.map(c => <option key={c.id} value={c.id}>{c.empresa || c.nome}</option>)}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-300">Data</label>
+            <input required type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-300">Hora</label>
+            <input required type="time" value={form.hora} onChange={e => setForm({...form, hora: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-zinc-300">Link da Reunião (Opcional)</label>
+          <input type="url" value={form.link} onChange={e => setForm({...form, link: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100" placeholder="https://meet.google.com/..." />
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-800">
+          <button type="button" className="px-4 py-2 text-sm text-zinc-300 hover:text-white" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Agendar</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+export function ModalNovoProjeto({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const { clientes, addProjeto, currentUser } = useApp();
+  const [form, setForm] = useState({ nome: '', cliente_id: '', tipo: 'Website', prazo: '' });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.nome || !form.cliente_id || !currentUser) return;
+    
+    addProjeto({
+      nome: form.nome,
+      cliente_id: parseInt(form.cliente_id),
+      tipo: form.tipo,
+      responsavel_id: currentUser.id,
+      progresso: 0,
+      prazo: form.prazo || new Date(Date.now() + 30*24*60*60*1000).toISOString()
+    });
+    setForm({ nome: '', cliente_id: '', tipo: 'Website', prazo: '' });
+    onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Novo Projeto">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-zinc-300">Nome do Projeto</label>
+          <input required type="text" value={form.nome} onChange={e => setForm({...form, nome: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100" placeholder="Ex: E-commerce" />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-zinc-300">Cliente</label>
+          <select required value={form.cliente_id} onChange={e => setForm({...form, cliente_id: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100">
+            <option value="">Selecione o Cliente</option>
+            {clientes.map(c => <option key={c.id} value={c.id}>{c.empresa || c.nome}</option>)}
+          </select>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-300">Tipo</label>
+            <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100">
+              {['Website', 'Lançamento', 'Branding', 'Tráfego', 'Mídias Sociais'].map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-zinc-300">Prazo (Entrega)</label>
+            <input type="date" value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100" />
+          </div>
+        </div>
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-zinc-800">
+          <button type="button" className="px-4 py-2 text-sm text-zinc-300 hover:text-white" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Criar Projeto</button>
         </div>
       </form>
     </Modal>

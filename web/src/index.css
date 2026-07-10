@@ -64,3 +64,23 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Scrollbar for Dark Mode */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(24, 24, 27, 0.5); /* zinc-900 */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(63, 63, 70, 0.8); /* zinc-700 */
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(82, 82, 91, 1); /* zinc-600 */
+}

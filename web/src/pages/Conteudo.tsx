@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { generateContentIdeas, generateScript } from '../lib/ai';
-import { Sparkles, PlayCircle, Plus, Loader2, Video, FileText, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Plus, Loader2, Video, FileText, CheckCircle2 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 export default function ConteudoPage() {
   const { clientes, addTarefa, currentUser } = useApp();
@@ -32,7 +31,7 @@ export default function ConteudoPage() {
     setSentToProd(false);
     
     // Fallback if niche is empty
-    const nicho = cliente.nicho_mercado || cliente.servico || 'Geral';
+    const nicho = cliente.segmento || cliente.servico || 'Geral';
     
     const novasIdeias = await generateContentIdeas(nicho, 5);
     setIdeias(novasIdeias);
@@ -49,7 +48,7 @@ export default function ConteudoPage() {
     setScript(null);
     setSentToProd(false);
 
-    const nicho = cliente.nicho_mercado || cliente.servico || 'Geral';
+    const nicho = cliente.segmento || cliente.servico || 'Geral';
     const novoRoteiro = await generateScript(nicho, ideia);
     
     setScript(novoRoteiro);
@@ -108,7 +107,7 @@ export default function ConteudoPage() {
               >
                 <option value="">Escolha um cliente...</option>
                 {clientes.map(c => (
-                  <option key={c.id} value={c.id}>{c.nome} ({c.nicho_mercado || c.servico})</option>
+                  <option key={c.id} value={c.id}>{c.nome} ({c.segmento || c.servico})</option>
                 ))}
               </select>
 

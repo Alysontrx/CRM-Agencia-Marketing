@@ -10,7 +10,7 @@ import type { LeadData } from '../data/types';
 import { Clock } from 'lucide-react';
 
 export default function ComercialPage() {
-  const { leads, updateLead, addCliente, addTarefa, addNotificacao, deleteLead, currentUser, currentAgencia, users } = useApp();
+  const { leads, updateLead, addCliente, addTarefa, addNotificacao, deleteLead, currentUser, users } = useApp();
   const isAdmin = currentUser?.funcao === 'Admin' || currentUser?.funcao === 'Secretária';
   const [modalNovoLead, setModalNovoLead] = useState(false);
   const [editLead, setEditLead] = useState<LeadData | undefined>(undefined);
@@ -37,7 +37,7 @@ export default function ComercialPage() {
 
   const getMensagemWhats = (lead: LeadData) => {
     const nome = lead.contato || 'Responsável';
-    const agencia = currentAgencia?.nome || 'agência';
+    const agencia = 'Sense';
     switch (lead.status) {
       case 'Prospect': return `Olá ${nome}! Aqui é da ${agencia}. Vi que você tem interesse em nossos serviços. Podemos conversar?`;
       case 'Contato Feito': return `Olá ${nome}! Tudo bem? Gostaria de agendar uma breve reunião para entender melhor suas necessidades.`;
@@ -52,7 +52,7 @@ export default function ComercialPage() {
 
   const getMensagemEmail = (lead: LeadData) => {
     const nome = lead.contato || 'Responsável';
-    const agencia = currentAgencia?.nome || 'agência';
+    const agencia = 'Sense';
     switch (lead.status) {
       case 'Prospect': return `Olá ${nome}, tudo bem?\n\nGostaríamos de apresentar nossas soluções da ${agencia} para a sua empresa.`;
       case 'Proposta': return `Olá ${nome}, tudo bem?\n\nSegue em anexo a nossa proposta comercial. Fico à disposição para dúvidas.`;
@@ -145,9 +145,9 @@ export default function ComercialPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               to: lead.email,
-              fromName: currentAgencia?.nome || 'Sense Agency',
-              fromEmail: currentAgencia?.nome?.includes('Sense') ? 'atlasupi@gmail.com' : (currentUser?.email || 'atlasupi@gmail.com'),
-              subject: `Bem-vindo à ${currentAgencia?.nome || 'nossa agência'}!`,
+              fromName: 'Sense',
+              fromEmail: currentUser?.email || 'contato@sense.com',
+              subject: `Bem-vindo à Sense!`,
               contractDetails: {
                 empresa: lead.empresa,
                 servico: servicoContratado,
@@ -160,7 +160,7 @@ export default function ComercialPage() {
                   <p>Sua conta já foi criada em nosso sistema e as equipes já foram notificadas e suas demandas geradas em nosso Kanban.</p>
                   <p>Em breve, nossa equipe de Onboarding entrará em contato para marcarmos nossa reunião de Kickoff.</p>
                   <br/>
-                  <p>Um abraço,<br/><strong>Equipe ${currentAgencia?.nome || 'Atlas'}</strong></p>
+                  <p>Um abraço,<br/><strong>Equipe Sense</strong></p>
                 </div>
               `
             })
@@ -335,12 +335,12 @@ export default function ComercialPage() {
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
                                     to: lead.email,
-                                    fromName: currentAgencia?.nome || 'Sense Agency',
-                                    fromEmail: currentAgencia?.nome?.includes('Sense') ? 'atlasupi@gmail.com' : (currentUser?.email || 'atlasupi@gmail.com'),
-                                    subject: `Contato - ${currentAgencia?.nome || 'Nossa Agência'}`,
+                                    fromName: 'Sense',
+                                    fromEmail: currentUser?.email || 'contato@sense.com',
+                                    subject: `Contato - Sense`,
                                     html: `<div style="font-family: sans-serif; color: #333; max-width: 600px;">
                                              <p>${getMensagemEmail(lead)}</p>
-                                             <br/><p>Um abraço,<br/><strong>${currentAgencia?.nome || 'Equipe'}</strong></p>
+                                             <br/><p>Um abraço,<br/><strong>Equipe Sense</strong></p>
                                            </div>`
                                   })
                                 })
@@ -422,7 +422,7 @@ export default function ComercialPage() {
                     <label className="text-sm font-medium text-zinc-300 mb-1.5 block">Gestor (Responsável)</label>
                     <select required value={responsavelId} onChange={e => setResponsavelId(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-zinc-100 focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 outline-none">
                       <option value="">Selecione...</option>
-                      {users?.filter(u => u.funcao !== 'Cliente').map(u => (
+                      {users?.map(u => (
                         <option key={u.id} value={u.id}>{u.nome}</option>
                       ))}
                     </select>

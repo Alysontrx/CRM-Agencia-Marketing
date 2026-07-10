@@ -12,12 +12,12 @@ import type { User } from '../data/types';
 
 export default function EquipePage() {
   const { currentUser, users, tarefas, deleteUser } = useApp();
-  const teamUsers = users.filter(u => u.funcao !== 'Cliente');
+  const teamUsers = users;
   
   const [modalUsuario, setModalUsuario] = useState(false);
   const [editUsuario, setEditUsuario] = useState<User | undefined>(undefined);
 
-  const isAdmin = currentUser?.funcao === 'Admin';
+  const isAdmin = currentUser?.funcao === 'Admin' || currentUser?.funcao === 'Administrador';
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -25,7 +25,7 @@ export default function EquipePage() {
         <CardHeader className="pb-4 pt-6 px-6 border-b border-zinc-800/30 flex flex-row items-center justify-between space-y-0">
           <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
             <Settings className="w-5 h-5 text-zinc-400" />
-            Performance da Equipe (Sense)
+            Performance da Equipe
           </CardTitle>
           {isAdmin && (
             <Button onClick={() => { setEditUsuario(undefined); setModalUsuario(true); }} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all h-8 px-3 text-xs">

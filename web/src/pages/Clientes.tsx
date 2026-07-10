@@ -9,9 +9,14 @@ import { ModalNovoCliente } from '../components/Modals';
 import React, { useState } from 'react';
 import type { ClienteData } from '../data/types';
 
-export default function ClientesPage() {
+interface ClientesPageProps {
+  onNavigateToPerfil?: (id: number) => void;
+}
+
+export default function ClientesPage({ onNavigateToPerfil }: ClientesPageProps) {
   const { clientes, tarefas, setClientes, addNotificacao, deleteCliente, currentUser } = useApp();
-  const isAdmin = currentUser?.funcao === 'Admin' || currentUser?.funcao === 'Secretária';
+  const f = currentUser?.funcao || '';
+  const isAdmin = f === 'Administrador' || f === 'Gerente' || f === 'Admin' || f === 'Secretária';
   const [modalNovoCliente, setModalNovoCliente] = useState(false);
   const [editCliente, setEditCliente] = useState<ClienteData | undefined>(undefined);
 
@@ -96,7 +101,13 @@ export default function ClientesPage() {
               </thead>
               <tbody className="divide-y divide-zinc-800/30">
                 {clientes.map(c => (
-                  <tr key={c.id} className="hover:bg-zinc-800/20 transition-colors group">
+                  <tr 
+                    key={c.id} 
+                    className="hover:bg-zinc-800/20 transition-colors group cursor-pointer"
+                    onClick={() => {
+                      if (onNavigateToPerfil) onNavigateToPerfil(c.id);
+                    }}
+                  >
                     <td className="px-6 py-4 flex items-center gap-4">
                       <Avatar className="h-10 w-10 rounded-xl shadow-lg border border-zinc-800 group-hover:scale-105 transition-transform">
                         <AvatarImage src={c.logo} className="object-cover" />
@@ -150,7 +161,7 @@ export default function ClientesPage() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => handlePagamento(c.id, c.nome)}
+                            onClick={(e) => { e.stopPropagation(); handlePagamento(c.id, c.nome); }}
                             className="h-8 text-[11px] font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border-emerald-500/30 transition-all shadow-sm"
                           >
                             <CheckCircle2 className="w-3 h-3 mr-1.5" /> Marcar Pago
@@ -160,7 +171,7 @@ export default function ClientesPage() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => handleAtraso(c.id, c.nome)}
+                            onClick={(e) => { e.stopPropagation(); handleAtraso(c.id, c.nome); }}
                             className="h-8 text-[11px] font-bold bg-zinc-900/50 hover:bg-rose-500/10 hover:text-rose-400 border-zinc-700 hover:border-rose-500/30 transition-all shadow-sm text-zinc-400"
                           >
                             <AlertCircle className="w-3 h-3 mr-1.5" /> Acusar Atraso
@@ -171,6 +182,7 @@ export default function ClientesPage() {
                             href={`https://wa.me/55${c.whatsapp.replace(/\D/g, '')}?text=Olá! Tudo bem? Passando para lembrar sobre a sua mensalidade referente aos nossos serviços da Agência que venceu no dia ${c.dia_pagamento || 'recentemente'}. Se já tiver feito o pagamento, pode desconsiderar essa mensagem. Qualquer dúvida, estou à disposição!`}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <Button 
                               variant="outline" 
@@ -186,10 +198,10 @@ export default function ClientesPage() {
                     {isAdmin && (
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => handleEdit(c)} className="h-7 px-2 text-xs bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-700">
+                          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleEdit(c); }} className="h-7 px-2 text-xs bg-zinc-800/50 border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-700">
                             Editar
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDelete(c.id)} className="h-7 px-2 text-xs bg-red-500/10 border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/20">
+                          <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleDelete(c.id); }} className="h-7 px-2 text-xs bg-red-500/10 border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/20">
                             Excluir
                           </Button>
                         </div>

@@ -1,13 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { AgenciaData, User, ClienteData, TarefaData, CorrecaoData, MetricaData, LeadData, NotificacaoData } from '../data/types';
-import { MOCK_USERS, MOCK_AGENCIAS, MOCK_CORRECOES } from '../data/mockData';
+import type { User, ClienteData, TarefaData, CorrecaoData, MetricaData, LeadData, NotificacaoData, ProjetoData, ConteudoData, FinanceiroData, ArquivoData, HistoricoData } from '../data/types';
+
 import { supabase } from '../lib/supabase';
 import { generateOnboardingTasks, qualifyLead } from '../lib/ai';
 import { sendWelcomeEmail } from '../lib/email';
 
 interface AppContextType {
   currentUser: User | null;
-  currentAgencia: AgenciaData | null;
   users: User[];
   clientes: ClienteData[];
   leads: LeadData[];
@@ -15,6 +14,11 @@ interface AppContextType {
   correcoes: CorrecaoData[];
   metricas: MetricaData[];
   notificacoes: NotificacaoData[];
+  projetos: ProjetoData[];
+  conteudos: ConteudoData[];
+  financeiro: FinanceiroData[];
+  arquivos: ArquivoData[];
+  historico: HistoricoData[];
   loadingData: boolean;
   login: (email: string) => Promise<boolean>;
   logout: () => void;
@@ -27,34 +31,43 @@ interface AppContextType {
   deleteCliente: (id: number) => Promise<void>;
   deleteMetrica: (id: number) => Promise<void>;
   addComentario: (tarefaId: number, texto: string) => Promise<void>;
-  addTarefa: (tarefa: Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios' | 'agencia_id'>) => Promise<void>;
-  addCliente: (cliente: Omit<ClienteData, 'id' | 'status_geral' | 'progresso' | 'agencia_id'>) => Promise<void>;
-  addLead: (lead: Omit<LeadData, 'id' | 'data_criacao' | 'nota_ia' | 'resumo_ia' | 'agencia_id'>) => Promise<void>;
-  addMetrica: (metrica: Omit<MetricaData, 'id' | 'agencia_id'>) => Promise<void>;
+  addTarefa: (tarefa: Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios'>) => Promise<void>;
+  addCliente: (cliente: Omit<ClienteData, 'id' | 'status_geral' | 'progresso'>) => Promise<void>;
+  addLead: (lead: Omit<LeadData, 'id' | 'data_criacao' | 'nota_ia' | 'resumo_ia'>) => Promise<void>;
+  addMetrica: (metrica: Omit<MetricaData, 'id'>) => Promise<void>;
   addNotificacao: (mensagem: string, tipo: 'info' | 'sucesso' | 'alerta' | 'erro') => Promise<void>;
   marcarNotificacaoLida: (id: number) => Promise<void>;
-  addUser: (user: Omit<User, 'id' | 'agencia_id'>) => Promise<void>;
+  addUser: (user: Omit<User, 'id'>) => Promise<void>;
   updateUser: (id: number, changes: Partial<User>) => Promise<void>;
   deleteUser: (id: number) => Promise<void>;
   setTarefas: React.Dispatch<React.SetStateAction<TarefaData[]>>;
   setClientes: React.Dispatch<React.SetStateAction<ClienteData[]>>;
   setLeads: React.Dispatch<React.SetStateAction<LeadData[]>>;
   setUsers: React.Dispatch<React.SetStateAction<User[]>>;
+  addProjeto: (projeto: Omit<ProjetoData, 'id' | 'data_inicio'>) => Promise<void>;
+  addConteudo: (conteudo: Omit<ConteudoData, 'id' | 'data_criacao'>) => Promise<void>;
+  addFinanceiro: (fin: Omit<FinanceiroData, 'id'>) => Promise<void>;
+  addArquivo: (arq: Omit<ArquivoData, 'id' | 'data_upload'>) => Promise<void>;
+  addHistorico: (hist: Omit<HistoricoData, 'id' | 'data_registro'>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [currentAgencia, setCurrentAgencia] = useState<AgenciaData | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [correcoes] = useState<CorrecaoData[]>(MOCK_CORRECOES);
+  const [correcoes] = useState<CorrecaoData[]>([]);
   
   const [clientes, setClientes] = useState<ClienteData[]>([]);
   const [leads, setLeads] = useState<LeadData[]>([]);
   const [tarefas, setTarefas] = useState<TarefaData[]>([]);
   const [metricas, setMetricas] = useState<MetricaData[]>([]);
   const [notificacoes, setNotificacoes] = useState<NotificacaoData[]>([]);
+  const [projetos, setProjetos] = useState<ProjetoData[]>([]);
+  const [conteudos, setConteudos] = useState<ConteudoData[]>([]);
+  const [financeiro, setFinanceiro] = useState<FinanceiroData[]>([]);
+  const [arquivos, setArquivos] = useState<ArquivoData[]>([]);
+  const [historico, setHistorico] = useState<HistoricoData[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   // Fetch initial data
@@ -67,13 +80,18 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       
       setLoadingData(true);
       try {
-        const [resClientes, resLeads, resTarefas, resMetricas, resNotificacoes, resUsers] = await Promise.all([
-          supabase.from('clientes').select('*').eq('agencia_id', currentUser.agencia_id).order('id', { ascending: false }),
-          supabase.from('leads').select('*').eq('agencia_id', currentUser.agencia_id).order('id', { ascending: false }),
-          supabase.from('tarefas').select('*').eq('agencia_id', currentUser.agencia_id).order('id', { ascending: false }),
-          supabase.from('metricas').select('*').eq('agencia_id', currentUser.agencia_id).order('id', { ascending: false }),
-          supabase.from('notificacoes').select('*').eq('agencia_id', currentUser.agencia_id).order('id', { ascending: false }),
-          supabase.from('usuarios').select('*').eq('agencia_id', currentUser.agencia_id).order('id', { ascending: false })
+        const [resClientes, resLeads, resTarefas, resMetricas, resNotificacoes, resUsers, resProj, resCont, resFin, resArq, resHist] = await Promise.all([
+          supabase.from('clientes').select('*').order('id', { ascending: false }),
+          supabase.from('leads').select('*').order('id', { ascending: false }),
+          supabase.from('tarefas').select('*').order('id', { ascending: false }),
+          supabase.from('metricas').select('*').order('id', { ascending: false }),
+          supabase.from('notificacoes').select('*').order('id', { ascending: false }),
+          supabase.from('usuarios').select('*').order('id', { ascending: false }),
+          supabase.from('projetos').select('*').order('id', { ascending: false }),
+          supabase.from('conteudos').select('*').order('id', { ascending: false }),
+          supabase.from('financeiro').select('*').order('id', { ascending: false }),
+          supabase.from('arquivos').select('*').order('id', { ascending: false }),
+          supabase.from('historico_clientes').select('*').order('id', { ascending: false })
         ]);
 
         if (resClientes.data) setClientes(resClientes.data);
@@ -82,6 +100,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         if (resMetricas.data) setMetricas(resMetricas.data);
         if (resNotificacoes.data) setNotificacoes(resNotificacoes.data);
         if (resUsers.data) setUsers(resUsers.data.map((u: any) => ({ ...u, avatar: u.avatar_url })));
+        if (resProj.data) setProjetos(resProj.data);
+        if (resCont.data) setConteudos(resCont.data);
+        if (resFin.data) setFinanceiro(resFin.data);
+        if (resArq.data) setArquivos(resArq.data);
+        if (resHist.data) setHistorico(resHist.data);
       } catch (err) {
         console.error("Erro ao carregar dados do Supabase", err);
       } finally {
@@ -95,8 +118,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: user } = await supabase.from('usuarios').select('*').ilike('email', email).single();
     if (user) { 
       setCurrentUser({ ...user, avatar: user.avatar_url }); 
-      const { data: agencia } = await supabase.from('agencias').select('*').eq('id', user.agencia_id).single();
-      setCurrentAgencia(agencia);
       return true; 
     }
     return false;
@@ -104,7 +125,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = () => {
     setCurrentUser(null);
-    setCurrentAgencia(null);
   };
 
   const updateTarefa = async (id: number, changes: Partial<TarefaData>) => {
@@ -174,21 +194,19 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.from('tarefas').update({ comentarios: novosComentarios }).eq('id', tarefaId);
   };
 
-  const addTarefa = async (tarefa: Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios' | 'agencia_id'>) => {
+  const addTarefa = async (tarefa: Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios'>) => {
     if (!currentUser) return;
-    const novaTarefa = { ...tarefa, agencia_id: currentUser.agencia_id };
-    const { data, error } = await supabase.from('tarefas').insert([novaTarefa]).select().single();
+    const { data, error } = await supabase.from('tarefas').insert([tarefa]).select().single();
     if (error) {
       console.error('Erro ao adicionar Tarefa:', error);
-      alert(`Erro ao adicionar tarefa. \nDetalhes: ${error.message} \nPayload: cliente_id=${novaTarefa.cliente_id}`);
+      alert(`Erro ao adicionar tarefa. \nDetalhes: ${error.message}`);
     }
     if (data && !error) setTarefas(prev => [data, ...prev]);
   };
 
-  const addCliente = async (cliente: Omit<ClienteData, 'id' | 'status_geral' | 'progresso' | 'agencia_id'>) => {
+  const addCliente = async (cliente: Omit<ClienteData, 'id' | 'status_geral' | 'progresso'>) => {
     if (!currentUser) return;
-    const novoCliente = { ...cliente, agencia_id: currentUser.agencia_id };
-    const { data, error } = await supabase.from('clientes').insert([novoCliente]).select().single();
+    const { data, error } = await supabase.from('clientes').insert([cliente]).select().single();
     if (error) {
       console.error('Erro ao criar Cliente no Supabase:', error);
       addNotificacao(`Erro ao salvar Cliente: ${error.message}`, 'erro');
@@ -200,21 +218,20 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       // Sense AI: Gerar tarefas de onboarding automaticamente
       generateOnboardingTasks(data.nome, data.servico, data.responsavel_id).then(async (tasks) => {
         if (tasks.length > 0) {
-          const tasksComCliente = tasks.map(t => ({ ...t, cliente_id: data.id, agencia_id: currentUser.agencia_id }));
+          const tasksComCliente = tasks.map(t => ({ ...t, cliente_id: data.id }));
           const res = await supabase.from('tarefas').insert(tasksComCliente).select();
           if (res.data) {
             setTarefas(prev => [...res.data, ...prev]);
-            addNotificacao(`A Sense AI gerou o plano de ação (onboarding) para o cliente ${data.nome}.`, 'sucesso');
+            addNotificacao(`A Inteligência Artificial gerou o plano de ação (onboarding) para o cliente ${data.nome}.`, 'sucesso');
           }
         }
       });
     }
   };
 
-  const addLead = async (lead: Omit<LeadData, 'id' | 'data_criacao' | 'nota_ia' | 'resumo_ia' | 'agencia_id'>) => {
+  const addLead = async (lead: Omit<LeadData, 'id' | 'data_criacao' | 'nota_ia' | 'resumo_ia'>) => {
     if (!currentUser) return;
-    const novoLead = { ...lead, agencia_id: currentUser.agencia_id };
-    const { data, error } = await supabase.from('leads').insert([novoLead]).select().single();
+    const { data, error } = await supabase.from('leads').insert([lead]).select().single();
     if (error) {
       console.error('Erro ao inserir Lead no Supabase:', error);
       addNotificacao(`Erro ao salvar Lead: ${error.message}`, 'erro');
@@ -233,7 +250,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       // Sense AI: Qualificação do Lead e criação de tarefa para o vendedor
       qualifyLead(data.empresa, data.contato, data.valor_estimado, data.origem).then(async (aiResult) => {
         if (aiResult) {
-          // Atualiza o lead com a nota e resumo da IA
           const { data: updatedLead } = await supabase
             .from('leads')
             .update({ nota_ia: aiResult.nota, resumo_ia: aiResult.resumo })
@@ -246,7 +262,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
             addNotificacao(`Lead qualificado pela IA! Nota: ${aiResult.nota}/10`, 'sucesso');
           }
 
-          // Cria a tarefa de follow-up sugerida pela IA
           addTarefa({
             titulo: `${aiResult.tarefa} (${data.empresa})`,
             cliente_id: null as any, // Como é lead, podemos colocar null
@@ -260,14 +275,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const addMetrica = async (metrica: Omit<MetricaData, 'id' | 'agencia_id'>) => {
+  const addMetrica = async (metrica: Omit<MetricaData, 'id'>) => {
     if (!currentUser) return;
-    const novaMetrica = { ...metrica, agencia_id: currentUser.agencia_id };
-    const { data, error } = await supabase.from('metricas').insert([novaMetrica]).select().single();
+    const { data, error } = await supabase.from('metricas').insert([metrica]).select().single();
     if (data && !error) setMetricas(prev => [data, ...prev]);
   };
 
-  const addUser = async (user: Omit<User, 'id' | 'agencia_id'>) => {
+  const addUser = async (user: Omit<User, 'id'>) => {
     if (!currentUser) return;
     const { avatar, ...rest } = user as any;
     
@@ -275,7 +289,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: maxUsers } = await supabase.from('usuarios').select('id').order('id', { ascending: false }).limit(1);
     const nextId = (maxUsers && maxUsers.length > 0) ? maxUsers[0].id + 1 : 1;
 
-    const novoUser = { ...rest, id: nextId, avatar_url: avatar, agencia_id: currentUser.agencia_id };
+    const novoUser = { ...rest, id: nextId, avatar_url: avatar };
     const { data, error } = await supabase.from('usuarios').insert([novoUser]).select().single();
     if (error) {
       console.error(error);
@@ -293,13 +307,43 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const addNotificacao = async (mensagem: string, tipo: 'info' | 'sucesso' | 'alerta' | 'erro') => {
     if (!currentUser) return;
-    const nova = { mensagem, tipo, lida: false, agencia_id: currentUser.agencia_id };
+    const nova = { mensagem, tipo, lida: false };
     const { data, error } = await supabase.from('notificacoes').insert([nova]).select().single();
     if (error) {
        console.error('Erro ao salvar notificação:', error);
        alert(mensagem); // Fallback nativo
     }
     if (data && !error) setNotificacoes(prev => [data, ...prev]);
+  };
+
+  const addProjeto = async (projeto: Omit<ProjetoData, 'id' | 'data_inicio'>) => {
+    if (!currentUser) return;
+    const { data, error } = await supabase.from('projetos').insert([projeto]).select().single();
+    if (data && !error) setProjetos(prev => [data, ...prev]);
+  };
+
+  const addConteudo = async (conteudo: Omit<ConteudoData, 'id' | 'data_criacao'>) => {
+    if (!currentUser) return;
+    const { data, error } = await supabase.from('conteudos').insert([conteudo]).select().single();
+    if (data && !error) setConteudos(prev => [data, ...prev]);
+  };
+
+  const addFinanceiro = async (fin: Omit<FinanceiroData, 'id'>) => {
+    if (!currentUser) return;
+    const { data, error } = await supabase.from('financeiro').insert([fin]).select().single();
+    if (data && !error) setFinanceiro(prev => [data, ...prev]);
+  };
+
+  const addArquivo = async (arq: Omit<ArquivoData, 'id' | 'data_upload'>) => {
+    if (!currentUser) return;
+    const { data, error } = await supabase.from('arquivos').insert([arq]).select().single();
+    if (data && !error) setArquivos(prev => [data, ...prev]);
+  };
+
+  const addHistorico = async (hist: Omit<HistoricoData, 'id' | 'data_registro'>) => {
+    if (!currentUser) return;
+    const { data, error } = await supabase.from('historico_clientes').insert([hist]).select().single();
+    if (data && !error) setHistorico(prev => [data, ...prev]);
   };
 
   const marcarNotificacaoLida = async (id: number) => {
@@ -309,10 +353,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AppContext.Provider value={{
-      currentUser, currentAgencia, users, clientes, leads, tarefas, correcoes, metricas, notificacoes, loadingData,
+      currentUser, users, clientes, leads, tarefas, correcoes, metricas, notificacoes, projetos, conteudos, financeiro, arquivos, historico, loadingData,
       login, logout, updateTarefa, updateLead, updateCliente, updateMetrica, 
       deleteTarefa, deleteLead, deleteCliente, deleteMetrica,
-      addComentario, addTarefa, addCliente, addLead, addMetrica, addNotificacao, marcarNotificacaoLida, addUser, updateUser, deleteUser, setTarefas, setClientes, setLeads, setUsers
+      addComentario, addTarefa, addCliente, addLead, addMetrica, addNotificacao, marcarNotificacaoLida, addUser, updateUser, deleteUser, setTarefas, setClientes, setLeads, setUsers,
+      addProjeto, addConteudo, addFinanceiro, addArquivo, addHistorico
     }}>
       {children}
     </AppContext.Provider>

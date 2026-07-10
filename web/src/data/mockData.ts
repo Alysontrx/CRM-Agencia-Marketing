@@ -1,7 +1,7 @@
-import type { AgenciaData, User, ClienteData, TarefaData, CorrecaoData, MetricaData, NotificacaoData } from './types';
+import type { AgenciaData, User, ClienteData, TarefaData, CorrecaoData, MetricaData, NotificacaoData, ProjetoData, ConteudoData, FinanceiroData, HistoricoData } from './types';
 
 export const MOCK_AGENCIAS: AgenciaData[] = [
-  { id: 1, nome: 'Sense Agency', logo_url: '/logo.png' },
+  { id: 1, nome: 'Agência Marketing', logo_url: '/logo.png' },
   { id: 2, nome: 'Vibra Marketing', logo_url: 'https://ui-avatars.com/api/?name=Vibra&background=random' },
 ];
 
@@ -10,18 +10,18 @@ export const MOCK_USERS: User[] = [
   { id: 2, agencia_id: 1, nome: 'Ana', email: 'ana@atlas.com', funcao: 'Designer', avatar: 'https://i.pravatar.cc/150?img=45' },
   { id: 3, agencia_id: 1, nome: 'Lucas', email: 'lucas@atlas.com', funcao: 'Social Media', avatar: 'https://i.pravatar.cc/150?img=12' },
   { id: 4, agencia_id: 1, nome: 'Marina', email: 'marina@atlas.com', funcao: 'Secretária', avatar: 'https://i.pravatar.cc/150?img=48' },
-  { id: 5, agencia_id: 1, nome: 'João', email: 'joao@atlas.com', funcao: 'Videomaker', avatar: 'https://i.pravatar.cc/150?img=15' },
+  { id: 5, agencia_id: 1, nome: 'João', email: 'joao@atlas.com', funcao: 'Editor de Vídeo', avatar: 'https://i.pravatar.cc/150?img=15' },
   // Usuário de outra agência para teste de isolamento
   { id: 6, agencia_id: 2, nome: 'Beto', email: 'beto@vibra.com', funcao: 'Admin', avatar: 'https://i.pravatar.cc/150?img=11' },
 ];
 
 export const MOCK_CLIENTES: any[] = [
-  { id: 1, agencia_id: 1, nome: 'Bella Store', servico: 'Gestão de Redes Sociais', responsavel_id: 2, status_geral: 'em_dia', progresso: 85, proxima_entrega: '2026-07-05', mrr: 1500, data_inicio: '2025-01-10', nicho_mercado: 'Moda' },
-  { id: 2, agencia_id: 1, nome: 'Clínica Vida', servico: 'Tráfego Pago + Social', responsavel_id: 3, status_geral: 'atencao', progresso: 40, pendencia_atual: 'Aguardando aprovação de verba', mrr: 2500, data_inicio: '2025-03-15', nicho_mercado: 'Saúde' },
-  { id: 3, agencia_id: 1, nome: 'Rancharia Eventos', servico: 'Audiovisual (Reels)', responsavel_id: 5, status_geral: 'em_dia', progresso: 100, proxima_entrega: '2026-07-03', mrr: 3000, data_inicio: '2025-06-01', nicho_mercado: 'Eventos' },
-  { id: 4, agencia_id: 1, nome: 'Tech Solutions', servico: 'Gestão Completa (SaaS)', responsavel_id: 2, status_geral: 'atrasado', progresso: 15, proxima_entrega: '2026-07-02', pendencia_atual: 'Revisão final do cliente', mrr: 4500, data_inicio: '2025-11-20', nicho_mercado: 'Tecnologia' },
+  { id: 1, agencia_id: 1, nome: 'Bella Store', servico: 'Gestão de Redes Sociais', responsavel_id: 2, status_geral: 'em_dia', progresso: 85, proxima_entrega: '2026-07-05', mrr: 1500, data_inicio: '2025-01-10', nicho: 'Moda' },
+  { id: 2, agencia_id: 1, nome: 'Clínica Vida', servico: 'Tráfego Pago + Social', responsavel_id: 3, status_geral: 'atencao', progresso: 40, pendencia_atual: 'Aguardando aprovação de verba', mrr: 2500, data_inicio: '2025-03-15', nicho: 'Saúde' },
+  { id: 3, agencia_id: 1, nome: 'Rancharia Eventos', servico: 'Audiovisual (Reels)', responsavel_id: 5, status_geral: 'em_dia', progresso: 100, proxima_entrega: '2026-07-03', mrr: 3000, data_inicio: '2025-06-01', nicho: 'Eventos' },
+  { id: 4, agencia_id: 1, nome: 'Tech Solutions', servico: 'Gestão Completa (SaaS)', responsavel_id: 2, status_geral: 'atrasado', progresso: 15, proxima_entrega: '2026-07-02', pendencia_atual: 'Revisão final do cliente', mrr: 4500, data_inicio: '2025-11-20', nicho: 'Tecnologia' },
   // Cliente da agência 2
-  { id: 5, agencia_id: 2, nome: 'Pizzaria Napoles', servico: 'Social Media', responsavel_id: 6, status_geral: 'em_dia', progresso: 50, proxima_entrega: '2026-07-10', mrr: 1000, data_inicio: '2026-01-10', nicho_mercado: 'Alimentação' },
+  { id: 5, agencia_id: 2, nome: 'Pizzaria Napoles', servico: 'Social Media', responsavel_id: 6, status_geral: 'em_dia', progresso: 50, proxima_entrega: '2026-07-10', mrr: 1000, data_inicio: '2026-01-10', nicho: 'Alimentação' },
 ];
 
 export const MOCK_LEADS: any[] = [
@@ -53,4 +53,28 @@ export const MOCK_METRICAS: MetricaData[] = [
 export const MOCK_NOTIFICACOES: NotificacaoData[] = [
   { id: 1, agencia_id: 1, mensagem: 'Gym Fit está há 5 dias na etapa Contato Feito sem movimentação.', tipo: 'alerta', lida: false, data_criacao: new Date().toISOString() },
   { id: 2, agencia_id: 1, mensagem: 'O cliente Bella Store solicitou urgência no reels.', tipo: 'info', lida: false, data_criacao: new Date().toISOString() },
+];
+
+export const MOCK_PROJETOS: ProjetoData[] = [
+  { id: 1, agencia_id: 1, cliente_id: 1, nome: 'Campanha de Inverno', tipo: 'Campanha Sazonal', responsavel_id: 2, progresso: 65, data_inicio: '2026-06-01', prazo: '2026-07-20' },
+  { id: 2, agencia_id: 1, cliente_id: 2, nome: 'Lançamento E-book', tipo: 'Inbound', responsavel_id: 3, progresso: 25, data_inicio: '2026-06-15', prazo: '2026-08-01' },
+];
+
+export const MOCK_CONTEUDO: ConteudoData[] = [
+  { id: 1, agencia_id: 1, cliente_id: 1, tipo: 'Post', titulo: 'Look de Inverno 2026', status: 'Em produção', data_criacao: '2026-07-07' },
+  { id: 2, agencia_id: 1, cliente_id: 1, tipo: 'Reel', titulo: 'Tendências de Moda', status: 'Em aprovação', data_criacao: '2026-07-05' },
+  { id: 3, agencia_id: 1, cliente_id: 2, tipo: 'Carrossel', titulo: '5 Benefícios do Clareamento', status: 'Agendado', data_criacao: '2026-07-06' },
+  { id: 4, agencia_id: 1, cliente_id: 3, tipo: 'Story', titulo: 'Bastidores do Evento', status: 'Publicado', data_criacao: '2026-07-08' },
+];
+
+export const MOCK_FINANCEIRO: FinanceiroData[] = [
+  { id: 1, agencia_id: 1, cliente_id: 1, descricao: 'Fee Mensal', valor: 1500, vencimento: '2026-07-10', status: 'Pendente' },
+  { id: 2, agencia_id: 1, cliente_id: 2, descricao: 'Fee Mensal + Tráfego', valor: 2500, vencimento: '2026-07-05', status: 'Atrasado' },
+  { id: 3, agencia_id: 1, cliente_id: 3, descricao: 'Cobertura de Evento', valor: 3000, vencimento: '2026-07-02', status: 'Pago' },
+];
+
+export const MOCK_HISTORICO: HistoricoData[] = [
+  { id: 1, agencia_id: 1, cliente_id: 1, usuario: 'Gabi', descricao: 'Aprovou a arte para o post "Look de Inverno"', data_registro: new Date(Date.now() - 3600000).toISOString() },
+  { id: 2, agencia_id: 1, cliente_id: 2, usuario: 'Lucas', descricao: 'Enviou proposta comercial para Gym Fit', data_registro: new Date(Date.now() - 7200000).toISOString() },
+  { id: 3, agencia_id: 1, cliente_id: 3, usuario: 'Ana', descricao: 'Concluiu o vídeo do evento Rancharia', data_registro: new Date(Date.now() - 86400000).toISOString() },
 ];

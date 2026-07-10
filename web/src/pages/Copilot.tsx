@@ -11,9 +11,9 @@ interface Message {
 }
 
 export default function CopilotPage() {
-  const { clientes, leads, tarefas, users } = useApp();
+  const { clientes, leads, tarefas } = useApp();
   const [messages, setMessages] = useState<Message[]>(() => {
-    const saved = localStorage.getItem('sense-copilot-history');
+    const saved = localStorage.getItem('atlas-copilot-history');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -25,7 +25,7 @@ export default function CopilotPage() {
       {
         id: '1',
         role: 'assistant',
-        content: 'Olá! Eu sou o Sense Copilot 🤖. Estou conectado aos dados da sua agência em tempo real. Como posso te ajudar hoje? \n\n*Dica: Você pode pedir para eu resumir os leads quentes, checar tarefas atrasadas ou até criar uma legenda para um post de um cliente.*'
+        content: 'Olá! Eu sou o Copilot Inteligente 🤖. Estou conectado aos dados da sua agência em tempo real. Como posso te ajudar hoje? \n\n*Dica: Você pode pedir para eu resumir os leads quentes, checar tarefas atrasadas ou até criar uma legenda para um post de um cliente.*'
       }
     ];
   });
@@ -40,7 +40,7 @@ export default function CopilotPage() {
 
   useEffect(() => {
     scrollToBottom();
-    localStorage.setItem('sense-copilot-history', JSON.stringify(messages));
+    localStorage.setItem('atlas-copilot-history', JSON.stringify(messages));
   }, [messages, isLoading]);
 
   // Função para compilar o contexto atual da agência
@@ -49,15 +49,17 @@ export default function CopilotPage() {
     const atrasados = clientes.filter(c => c.status_geral === 'atrasado').map(c => c.nome).join(', ');
     const activeLeads = leads.filter(l => l.status !== 'Fechado' && l.status !== 'Perdido').length;
     const tarefasAtrasadas = tarefas.filter(t => t.status === 'Atrasado').map(t => t.titulo).join(', ');
+    const nichosClientes = clientes.filter(c => c.nicho).map(c => `${c.nome}: ${c.nicho}`).join(' | ');
     
     return `
 Resumo da Agência:
 - Total de clientes: ${activeClients}
+- Nichos dos Clientes: ${nichosClientes || 'Não informados'}
 - Clientes com pagamento atrasado: ${atrasados || 'Nenhum'}
 - Leads ativos no funil: ${activeLeads}
 - Tarefas atrasadas da equipe: ${tarefasAtrasadas || 'Nenhuma'}
 
-Lembre-se: Use essas informações APENAS se for relevante para a pergunta do usuário.
+Lembre-se: Use essas informações APENAS se for relevante para a pergunta do usuário. Quando criar postagens, roteiros ou textos, leve em consideração o nicho de cada cliente se for solicitado para aquele cliente específico.
     `.trim();
   };
 
@@ -111,7 +113,7 @@ Lembre-se: Use essas informações APENAS se for relevante para a pergunta do us
             <Sparkles className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-zinc-100 font-bold text-lg leading-tight">Sense Copilot</h2>
+            <h2 className="text-zinc-100 font-bold text-lg leading-tight">Copilot Inteligente</h2>
             <p className="text-zinc-400 text-xs">Sua IA integrada aos dados da agência</p>
           </div>
         </div>
@@ -175,7 +177,7 @@ Lembre-se: Use essas informações APENAS se for relevante para a pergunta do us
           </Button>
         </div>
         <p className="text-center text-[10px] text-zinc-600 mt-3 font-medium">
-          O Sense Copilot usa o Llama 3.1 e pode cometer erros. Verifique informações importantes.
+          A Inteligência Artificial usa o Llama 3.1 e pode cometer erros. Verifique informações importantes.
         </p>
       </div>
     </div>

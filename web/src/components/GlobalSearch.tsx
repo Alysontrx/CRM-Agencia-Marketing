@@ -40,7 +40,7 @@ export function GlobalSearch({ isOpen, onClose, onNavigate }: GlobalSearchProps)
     searchTerms.every(term => 
       c.nome.toLowerCase().includes(term) || 
       c.servico.toLowerCase().includes(term) ||
-      c.nicho_mercado?.toLowerCase().includes(term)
+      c.segmento?.toLowerCase().includes(term)
     )
   ).slice(0, 5) : [];
 
@@ -124,6 +124,7 @@ export function GlobalSearch({ isOpen, onClose, onNavigate }: GlobalSearchProps)
                           <div>
                             <p className="text-zinc-200 text-sm font-semibold group-hover:text-blue-400 transition-colors">{c.nome}</p>
                             <p className="text-zinc-500 text-xs">{c.servico}</p>
+                            {c.segmento && <span className="ml-2 px-1.5 py-0.5 rounded-full bg-zinc-800 text-[10px]">{c.segmento}</span>}
                           </div>
                         </div>
                         <Badge variant="outline" className="bg-zinc-900 border-zinc-700 text-zinc-400 text-[10px]">Ver Cliente</Badge>
@@ -198,7 +199,7 @@ export function GlobalSearch({ isOpen, onClose, onNavigate }: GlobalSearchProps)
               <div className="flex items-center gap-2">
                 Navegue rapidamente pelos módulos.
               </div>
-              <div>Sense AI</div>
+              <div>Copilot IA</div>
             </div>
           </motion.div>
         </div>

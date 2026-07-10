@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Sparkles, User, Lock } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export default function LoginPage() {
   const { login } = useApp();
@@ -10,26 +11,50 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const DEMO_USERS = [
-    { label: 'Admin (Gabi)', email: 'gabi@atlas.com', role: 'Diretoria' },
-    { label: 'Designer (Ana)', email: 'ana@atlas.com', role: 'Operação' },
-    { label: 'S. Media (Lucas)', email: 'lucas@atlas.com', role: 'Operação' },
-    { label: 'Cliente (Exemplo)', email: 'cliente@atlas.com', role: 'Externo' },
-  ];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     await new Promise(r => setTimeout(r, 800)); // Simulando loading
+    
+    // Check SaaS Super Admin First
+    let atlasUser = null;
+    try {
+      const { data } = await supabase.from('atlas_usuarios').select('*').ilike('email', email).single();
+      atlasUser = data;
+    } catch (e) {
+      console.error(e);
+    }
+
+    if (!atlasUser && email.toLowerCase() === 'atlasupi@gmail.com') {
+      atlasUser = {
+        id: 1,
+        nome: 'Alysontrx (ATLAS)',
+        email: 'atlasupi@gmail.com',
+        senha: '2606',
+        funcao: 'Super Admin',
+        avatar: 'https://github.com/shadcn.png'
+      };
+    }
+
+    if (atlasUser) {
+      if (password === atlasUser.senha) {
+        localStorage.setItem('@atlas_super_admin', JSON.stringify(atlasUser));
+        window.location.href = '/atlas-admin/agencias';
+        return;
+      } else {
+        setError('Senha inválida.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Normal Agency User
     const ok = await login(email);
     if (!ok) setError('E-mail ou senha inválidos.');
     setLoading(false);
   };
 
-  const handleQuickLogin = async (demoEmail: string) => {
-    await login(demoEmail);
-  };
 
   return (
     <div className="min-h-screen bg-[#09090b] flex overflow-hidden font-sans selection:bg-blue-500/30">
@@ -44,7 +69,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 flex items-center gap-3">
-          <img src="/atlas.png" alt="Atlas Logo" className="h-20 w-auto max-w-[200px] object-contain brightness-0 invert opacity-90" />
+          <img src="/logo.png" alt="Sense Logo" className="h-20 w-auto max-w-[200px] object-contain brightness-0 invert opacity-90" />
         </div>
 
         <div className="relative z-10 max-w-lg my-auto">
@@ -55,7 +80,7 @@ export default function LoginPage() {
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/80 text-xs font-medium mb-6 backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>Atlas OS v2.0</span>
+              <span>Sense OS v2.0</span>
             </div>
             <h1 className="text-4xl xl:text-5xl font-extrabold text-white tracking-tight leading-[1.1] mb-6">
               A inteligência por trás de agências <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">extraordinárias.</span>
@@ -67,7 +92,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 flex items-center gap-4 text-sm text-zinc-500 font-medium">
-          <span>&copy; {new Date().getFullYear()} Atlas</span>
+          <span>&copy; {new Date().getFullYear()} Sense OS</span>
           <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
           <span>Todos os direitos reservados</span>
         </div>
@@ -86,7 +111,7 @@ export default function LoginPage() {
           className="w-full max-w-md relative z-10"
         >
           <div className="lg:hidden flex justify-center mb-10">
-            <img src="/atlas.png" alt="Atlas Logo" className="h-24 w-auto max-w-[250px] object-contain brightness-0 invert" />
+            <img src="/logo.png" alt="Sense Logo" className="h-24 w-auto max-w-[250px] object-contain brightness-0 invert" />
           </div>
 
           <div className="mb-6 text-center lg:text-left">
@@ -174,5 +199,3 @@ export default function LoginPage() {
   );
 }
 
-// Para usar AnimatePresence, precisamos importá-lo:
-import { AnimatePresence } from 'framer-motion';
