@@ -29,7 +29,7 @@ export function ModalNovaTarefa({ isOpen, onClose, editData }: { isOpen: boolean
     if (editData) {
       setForm({
         titulo: editData.titulo,
-        cliente_id: editData.cliente_id.toString(),
+        cliente_id: editData.cliente_id?.toString() || '',
         responsavel_id: editData.responsavel_id.toString(),
         prioridade: editData.prioridade,
         prazo: editData.prazo || '',
