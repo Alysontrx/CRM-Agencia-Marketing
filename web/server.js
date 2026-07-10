@@ -242,7 +242,7 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Backend de E-mails rodando na porta ${PORT} (Brevo + PDFKit)`);
+  console.log(`Backend rodando na porta ${PORT} (Brevo + PDFKit)`);
 });

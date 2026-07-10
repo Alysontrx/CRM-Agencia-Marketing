@@ -140,7 +140,7 @@ export default function ComercialPage() {
         addNotificacao(`Pasta do Google Drive criada para ${lead.empresa}`, 'info');
 
         if (lead.email) {
-          fetch('http://localhost:3001/api/send-email', {
+          fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/send-email`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -330,7 +330,7 @@ export default function ComercialPage() {
                               e.stopPropagation();
                               if (lead.email) {
                                 addNotificacao(`Enviando e-mail para ${lead.email}...`, 'info');
-                                fetch('http://localhost:3001/api/send-email', {
+                                fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/send-email`, {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
