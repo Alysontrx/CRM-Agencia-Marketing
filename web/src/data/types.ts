@@ -4,8 +4,15 @@ export type Page = 'dashboard' | 'comercial' | 'kanban' | 'clientes' | 'resultad
 
 export type UserRole = 'Administrador' | 'Gerente' | 'Secretária' | 'Comercial' | 'Designer' | 'Editor de Vídeo' | 'Social Media' | 'Desenvolvedor' | 'Financeiro' | 'Admin'; // Admin kept for retrocompatibility with current data
 
+export interface AgenciaData {
+  id: number;
+  nome: string;
+  logo_url?: string;
+}
+
 export interface User {
   id: number;
+  agencia_id?: number;
   nome: string;
   email: string;
   funcao: UserRole;
@@ -56,6 +63,7 @@ export interface ClienteData {
 
 export interface ProjetoData {
   id: number;
+  agencia_id?: number;
   cliente_id: number;
   nome: string;
   tipo: string;
@@ -67,6 +75,7 @@ export interface ProjetoData {
 
 export interface ConteudoData {
   id: number;
+  agencia_id?: number;
   cliente_id: number;
   tipo: 'Post' | 'Vídeo' | 'Criativo' | 'Story' | 'Reel' | 'Carrossel';
   titulo: string;
@@ -119,8 +128,9 @@ export interface LeadData {
 
 export interface TarefaData {
   id: number;
+  agencia_id?: number;
   titulo: string;
-  cliente_id: number;
+  cliente_id?: number;
   responsavel_id: number;
   setor: string;
   prioridade: string;
@@ -134,6 +144,7 @@ export interface TarefaData {
 
 export interface CorrecaoData {
   id: number;
+  agencia_id?: number;
   cliente_id: number;
   tarefa_id: number;
   descricao: string;
@@ -144,6 +155,7 @@ export interface CorrecaoData {
 
 export interface MetricaData {
   id: number;
+  agencia_id?: number;
   cliente_id: number;
   data_registro: string;
   seguidores: number;
@@ -157,6 +169,7 @@ export interface MetricaData {
 
 export interface NotificacaoData {
   id: number;
+  agencia_id?: number;
   mensagem: string;
   tipo: 'info' | 'sucesso' | 'alerta' | 'erro';
   lida: boolean;
