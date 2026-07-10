@@ -76,6 +76,7 @@ export interface ConteudoData {
 
 export interface FinanceiroData {
   id: number;
+  agencia_id?: number;
   cliente_id: number;
   descricao: string;
   valor: number;
@@ -85,6 +86,7 @@ export interface FinanceiroData {
 
 export interface ArquivoData {
   id: number;
+  agencia_id?: number;
   cliente_id: number;
   nome: string;
   categoria: 'Logos' | 'PDFs' | 'Contratos' | 'Briefing' | 'Vídeos' | 'Imagens' | 'Documentos';
@@ -94,6 +96,7 @@ export interface ArquivoData {
 
 export interface HistoricoData {
   id: number;
+  agencia_id?: number;
   cliente_id: number;
   usuario: string;
   descricao: string;

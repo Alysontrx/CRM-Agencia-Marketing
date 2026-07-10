@@ -30,7 +30,7 @@ export default function VideoMakerDashboard() {
   }, []);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isTimerRunning) {
       interval = setInterval(() => setTimerSeconds(s => s + 1), 1000);
     }
