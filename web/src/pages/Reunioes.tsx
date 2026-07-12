@@ -4,11 +4,17 @@ import { useApp } from '../context/AppContext';
 import { Calendar, Clock, Video, MoreVertical, Trash2, Edit2, MapPin } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ModalNovaReuniao } from '../components/Modals';
 
 export default function ReunioesPage() {
   const { tarefas, clientes, deleteTarefa, currentUser } = useApp();
+
   const [modalNovaReuniao, setModalNovaReuniao] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [activeTab, setActiveTab] = useState<'calendar' | 'list'>('calendar'); 
+
   const isAdmin = currentUser?.funcao === 'Admin' || currentUser?.funcao === 'Administrador';
 
   // Filter reunioes
@@ -30,9 +36,10 @@ export default function ReunioesPage() {
     const timeStr = !isNaN(dateObj.getTime()) ? dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
     
     // Extract link if exists in title like: "Reunião: Título (https://link)"
-    const match = reuniao.titulo.match(/\((https?:\/\/[^\)]+)\)/);
+    const safeTitle = reuniao.titulo || '';
+    const match = safeTitle.match(/\((https?:\/\/[^\)]+)\)/);
     const link = match ? match[1] : null;
-    const cleanTitle = reuniao.titulo.replace(/\(https?:\/\/[^\)]+\)/, '').replace('Reunião: ', '').trim();
+    const cleanTitle = safeTitle.replace(/\(https?:\/\/[^\)]+\)/, '').replace('Reunião: ', '').trim();
 
     return (
       <Card key={reuniao.id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-all rounded-xl relative overflow-hidden group">
@@ -82,25 +89,33 @@ export default function ReunioesPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pb-10 max-w-5xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-zinc-100">Agenda & Reuniões</h1>
-          <p className="text-zinc-400 text-sm mt-1">Gerencie as próximas reuniões com clientes e equipe.</p>
+          <p className="text-zinc-400 text-sm mt-1">Gerencie a sua agenda principal e as reuniões com clientes.</p>
         </div>
         <button 
           onClick={() => setModalNovaReuniao(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all font-medium text-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all font-medium text-sm w-max"
         >
           <Calendar className="w-4 h-4" />
-          Agendar Reunião
+          Agendar Reunião no CRM
+        </button>
+      </div>
+
+      <div className="flex border-b border-zinc-800">
+        <button
+          className="px-6 py-3 font-medium text-sm transition-colors border-b-2 border-blue-500 text-blue-400"
+        >
+          Próximos Encontros
         </button>
       </div>
 
       <div className="space-y-8">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2 mb-4">
-            <div className="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-            Próximas Reuniões ({proximas.length})
+          <div>
+            <h2 className="text-lg font-semibold text-zinc-100 flex items-center gap-2 mb-4">
+              <div className="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+              Próximas Reuniões ({proximas.length})
           </h2>
           {proximas.length === 0 ? (
             <div className="text-center py-10 bg-zinc-900/30 border border-zinc-800/50 rounded-xl">
@@ -127,7 +142,10 @@ export default function ReunioesPage() {
         )}
       </div>
 
-      <ModalNovaReuniao isOpen={modalNovaReuniao} onClose={() => setModalNovaReuniao(false)} />
+      <ModalNovaReuniao 
+        isOpen={modalNovaReuniao} 
+        onClose={() => setModalNovaReuniao(false)} 
+      />
     </motion.div>
   );
 }

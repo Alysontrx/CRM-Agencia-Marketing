@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   LayoutDashboard, KanbanSquare, Users, TrendingUp, Settings, 
-  LogOut, Bell, Plus, Search, MoreVertical, CheckCircle2, Clock, AlertCircle, PlayCircle, MessageSquare, X, DollarSign, Phone, Mail, FileText, Sparkles, Menu
+  LogOut, Bell, Plus, Search, MoreVertical, CheckCircle2, Clock, AlertCircle, PlayCircle, MessageSquare, X, DollarSign, Phone, Mail, FileText, Sparkles, Menu, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ModalNovaTarefa, ModalNovoCliente, ModalNovaMetrica, ModalNovoLead } from '../components/Modals';
@@ -22,6 +22,7 @@ import ResultadosPage from './Resultados';
 import EquipePage from './Equipe';
 import CopilotPage from './Copilot';
 import ConteudoPage from './Conteudo';
+import PlanejadorPage from './Planejador';
 import EmployeeDashboard from './EmployeeDashboard';
 
 import ClientePerfilPage from './ClientePerfil';
@@ -29,8 +30,9 @@ import SuporteAgenciaPage from './SuporteAgencia';
 import ReunioesPage from './Reunioes';
 import VideoMakerDashboard from './VideoMakerDashboard';
 import SecretaryDashboard from './SecretaryDashboard';
+import CalendarioPage from './Calendario';
 
-export type Page = 'dashboard' | 'comercial' | 'kanban' | 'reunioes' | 'clientes' | 'resultados' | 'equipe' | 'copilot' | 'conteudo' | 'cliente-perfil' | 'suporte' | 'employee_dashboard' | 'video_maker_dashboard' | 'secretary_dashboard';
+export type Page = 'dashboard' | 'comercial' | 'kanban' | 'reunioes' | 'calendario' | 'clientes' | 'resultados' | 'equipe' | 'copilot' | 'conteudo' | 'planejador' | 'cliente-perfil' | 'suporte' | 'employee_dashboard' | 'video_maker_dashboard' | 'secretary_dashboard';
 
 // ===== SIDEBAR =====
 function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page; setPage: (p: Page) => void; isMobileOpen: boolean; setIsMobileOpen: (v: boolean) => void }) {
@@ -54,7 +56,9 @@ function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page;
     { id: 'video_maker_dashboard', icon: LayoutDashboard, label: 'Meu Estúdio', show: isVideoMaker },
     { id: 'kanban', icon: KanbanSquare, label: isAdmin ? 'Tarefas' : 'Minhas Demandas', show: true },
     { id: 'reunioes', icon: Clock, label: 'Reuniões', show: true },
+    { id: 'calendario', icon: Calendar, label: 'Calendário', show: true },
     { id: 'conteudo', icon: Sparkles, label: 'Conteúdo (IA)', show: isAdmin || isProdutor },
+    { id: 'planejador', icon: Calendar, label: 'Planejador de Posts', show: isAdmin || isProdutor },
     { id: 'clientes', icon: Users, label: 'Clientes', show: isAdmin || isSecretaria || isComercial || isFinanceiro },
     { id: 'resultados', icon: TrendingUp, label: 'Antes × Depois', show: isAdmin },
     { id: 'copilot', icon: Sparkles, label: 'Copilot', show: isAdmin || isProdutor },
@@ -75,7 +79,7 @@ function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page;
       )}
       
       <aside className={`
-        fixed md:static inset-y-0 left-0 z-50 w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col flex-shrink-0
+        fixed md:static inset-y-0 left-0 z-50 w-64 glass-panel border-r border-zinc-800 flex flex-col flex-shrink-0
         transform transition-transform duration-300 ease-in-out
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
@@ -138,12 +142,14 @@ const PAGE_TITLES: Record<Page, { title: string; subtitle: string }> = {
   copilot: { title: 'Sense Copilot', subtitle: 'Seu assistente IA conectado aos dados da agência' },
   equipe: { title: 'Equipe', subtitle: 'Performance e tarefas dos colaboradores' },
   conteudo: { title: 'Estúdio de Conteúdo', subtitle: 'Fábrica de ideias, roteiros e legendas com IA' },
+  planejador: { title: 'Planejador de Conteúdo', subtitle: 'Visualize e adiante posts organizados por mês' },
   'cliente-perfil': { title: 'Perfil do Cliente', subtitle: 'Visão 360 do cliente' },
   suporte: { title: 'Suporte Técnico', subtitle: 'Fale com a equipe de suporte da plataforma' },
   employee_dashboard: { title: 'Meu Dashboard', subtitle: 'Foco na sua execução de hoje' },
   video_maker_dashboard: { title: 'Estúdio de Produção', subtitle: 'Central de Audiovisual' },
   secretary_dashboard: { title: 'Central de Triagem', subtitle: 'Visão de atendimentos rápidos e agenda' },
-  reunioes: { title: 'Agenda & Reuniões', subtitle: 'Gerencie seus compromissos e videoconferências' },
+  reunioes: { title: 'Reuniões', subtitle: 'Gerencie seus compromissos e videoconferências' },
+  calendario: { title: 'Calendário Geral', subtitle: 'Agenda completa da agência' },
 };
 
 function Topbar({ page, onNewTask, onOpenSearch, onToggleMenu }: { page: Page; onNewTask: () => void; onOpenSearch: () => void; onToggleMenu: () => void }) {
@@ -153,7 +159,7 @@ function Topbar({ page, onNewTask, onOpenSearch, onToggleMenu }: { page: Page; o
   const [showDropdown, setShowDropdown] = useState(false);
 
   return (
-    <header className="h-16 min-h-[64px] bg-zinc-950 border-b border-zinc-800/50 flex items-center justify-between px-4 md:px-6 z-40 sticky top-0">
+    <header className="h-16 min-h-[64px] glass-panel border-b border-zinc-800/50 flex items-center justify-between px-4 md:px-6 z-40 sticky top-0">
       <div className="flex items-center gap-3">
         <button className="md:hidden p-2 -ml-2 text-zinc-400 hover:text-white transition-colors" onClick={onToggleMenu}>
           <Menu className="w-6 h-6" />
@@ -322,11 +328,13 @@ export default function MainLayout() {
           {page === 'comercial' && <ComercialPage />}
           {page === 'kanban' && <KanbanPage />}
           {page === 'reunioes' && <ReunioesPage />}
+          {page === 'calendario' && <CalendarioPage />}
           {page === 'clientes' && <ClientesPage onNavigateToPerfil={(id) => { setSelectedClienteId(id); setPage('cliente-perfil'); }} />}
           {page === 'resultados' && <ResultadosPage />}
           {page === 'copilot' && <CopilotPage />}
           {page === 'equipe' && <EquipePage />}
           {page === 'conteudo' && <ConteudoPage />}
+          {page === 'planejador' && <PlanejadorPage />}
           {page === 'cliente-perfil' && selectedClienteId && <ClientePerfilPage clienteId={selectedClienteId} onBack={() => { setPage('clientes'); setSelectedClienteId(null); }} />}
           {page === 'suporte' && <SuporteAgenciaPage />}
         </main>

@@ -19,7 +19,7 @@ export function Modal({ isOpen, onClose, title, children }: { isOpen: boolean; o
   );
 }
 
-export function ModalNovaTarefa({ isOpen, onClose, editData }: { isOpen: boolean; onClose: () => void, editData?: TarefaData }) {
+export function ModalNovaTarefa({ isOpen, onClose, editData, initialDate }: { isOpen: boolean; onClose: () => void, editData?: TarefaData, initialDate?: Date }) {
   const { clientes, users, addTarefa, updateTarefa } = useApp();
   const [form, setForm] = useState({ titulo: '', cliente_id: '', responsavel_id: '', prioridade: 'Média', prazo: '', setor: 'Geral' });
   const [checklists, setChecklists] = useState<Array<{ id: string; text: string; completed: boolean }>>([]);
@@ -40,7 +40,17 @@ export function ModalNovaTarefa({ isOpen, onClose, editData }: { isOpen: boolean
       setForm({ titulo: '', cliente_id: '', responsavel_id: '', prioridade: 'Média', prazo: '', setor: 'Geral' });
       setChecklists([]);
     }
-  }, [editData, isOpen]);
+
+    if (!editData && initialDate && isOpen) {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const yyyy = initialDate.getFullYear();
+      const mm = pad(initialDate.getMonth() + 1);
+      const dd = pad(initialDate.getDate());
+      const hh = pad(initialDate.getHours() === 0 ? 9 : initialDate.getHours()); // default 9am
+      const min = pad(initialDate.getMinutes());
+      setForm(f => ({ ...f, prazo: `${yyyy}-${mm}-${dd}T${hh}:${min}` }));
+    }
+  }, [editData, isOpen, initialDate]);
 
   const handleAddChecklist = () => {
     if (!newChecklistText.trim()) return;
@@ -125,8 +135,8 @@ export function ModalNovaTarefa({ isOpen, onClose, editData }: { isOpen: boolean
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-zinc-300">Prazo</label>
-            <input type="date" className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 [color-scheme:dark]" required value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} />
+            <label className="text-sm font-medium text-zinc-300">Prazo e Horário</label>
+            <input type="datetime-local" className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 [color-scheme:dark]" required value={form.prazo} onChange={e => setForm({...form, prazo: e.target.value})} />
           </div>
         </div>
         
@@ -591,9 +601,21 @@ export function ModalNovoUsuario({ isOpen, onClose, editData }: { isOpen: boolea
   );
 }
 
-export function ModalNovaReuniao({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export function ModalNovaReuniao({ isOpen, onClose, initialDate }: { isOpen: boolean; onClose: () => void; initialDate?: Date }) {
   const { clientes, addTarefa, currentUser } = useApp();
   const [form, setForm] = useState({ titulo: '', cliente_id: '', data: '', hora: '', link: '' });
+
+  React.useEffect(() => {
+    if (initialDate && isOpen) {
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const yyyy = initialDate.getFullYear();
+      const mm = pad(initialDate.getMonth() + 1);
+      const dd = pad(initialDate.getDate());
+      const hh = pad(initialDate.getHours() === 0 ? 9 : initialDate.getHours()); // default 9am if no time
+      const min = pad(initialDate.getMinutes());
+      setForm(f => ({ ...f, data: `${yyyy}-${mm}-${dd}`, hora: `${hh}:${min}` }));
+    }
+  }, [initialDate, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -605,8 +627,12 @@ export function ModalNovaReuniao({ isOpen, onClose }: { isOpen: boolean; onClose
       finalPrazo = new Date(`${form.data}T${form.hora}:00`).toISOString();
     } catch(e) {}
 
+    const title = `Reunião: ${form.titulo}`;
+    const clienteName = form.cliente_id ? clientes.find(c => c.id === parseInt(form.cliente_id))?.nome : '';
+    const details = `Cliente: ${clienteName || 'Interna'}\n${form.link ? `Link da Reunião: ${form.link}` : ''}`;
+    
     addTarefa({
-      titulo: `Reunião: ${form.titulo} ${form.link ? `(${form.link})` : ''}`,
+      titulo: `${title} ${form.link ? `(${form.link})` : ''}`,
       cliente_id: form.cliente_id ? parseInt(form.cliente_id) : undefined,
       responsavel_id: currentUser.id,
       setor: 'Reunião',
@@ -614,6 +640,25 @@ export function ModalNovaReuniao({ isOpen, onClose }: { isOpen: boolean; onClose
       prazo: finalPrazo,
       status: 'A fazer'
     });
+
+    // Generate Google Calendar Template URL
+    try {
+      const dStart = new Date(finalPrazo);
+      const dEnd = new Date(dStart.getTime() + 60 * 60 * 1000); // 1 hour duration
+      const fmtDate = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      
+      const gcalUrl = new URL('https://calendar.google.com/calendar/render');
+      gcalUrl.searchParams.append('action', 'TEMPLATE');
+      gcalUrl.searchParams.append('text', title);
+      gcalUrl.searchParams.append('dates', `${fmtDate(dStart)}/${fmtDate(dEnd)}`);
+      gcalUrl.searchParams.append('details', details);
+      if (form.link) gcalUrl.searchParams.append('location', form.link);
+      
+      window.open(gcalUrl.toString(), '_blank');
+    } catch(e) {
+      console.error("Failed to generate Google Calendar link", e);
+    }
+
     setForm({ titulo: '', cliente_id: '', data: '', hora: '', link: '' });
     onClose();
   };

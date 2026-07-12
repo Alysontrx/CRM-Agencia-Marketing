@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ModalNovoCliente } from '../components/Modals';
+import { ModalExportarPDF, generatePDFFromHTML } from '../components/ModalExportarPDF';
+import { Download } from 'lucide-react';
 
 interface ClientePerfilProps {
   clienteId: number;
@@ -22,6 +24,18 @@ export default function ClientePerfilPage({ clienteId, onBack }: ClientePerfilPr
   const cliente = clientes.find(c => c.id === clienteId);
   const [activeTab, setActiveTab] = useState('visao-geral');
   const [modalEdit, setModalEdit] = useState(false);
+  const [modalExport, setModalExport] = useState(false);
+  const [pdfPeriod, setPdfPeriod] = useState<{start: string, end: string} | null>(null);
+
+  React.useEffect(() => {
+    if (pdfPeriod) {
+      // Delay for React to re-render the hidden div with filtered data
+      setTimeout(() => {
+        generatePDFFromHTML('pdf-content-cliente', `Relatorio_${cliente?.empresa || cliente?.nome || 'Cliente'}.pdf`);
+        setPdfPeriod(null);
+      }, 500);
+    }
+  }, [pdfPeriod, cliente]);
 
   if (!cliente) return <div className="text-zinc-500">Cliente não encontrado.</div>;
 
@@ -67,7 +81,10 @@ export default function ClientePerfilPage({ clienteId, onBack }: ClientePerfilPr
         </div>
 
         <div className="flex gap-2">
-          <Button className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100">
+          <Button onClick={() => setModalExport(true)} variant="outline" className="border-zinc-700 bg-zinc-900 text-zinc-100 hover:bg-zinc-800 hover:text-white">
+            <Download className="w-4 h-4 mr-2" /> Exportar Relatório
+          </Button>
+          <Button className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hidden md:flex">
             <MoreVertical className="w-4 h-4" />
           </Button>
           <Button onClick={() => setModalEdit(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20">
@@ -300,6 +317,69 @@ export default function ClientePerfilPage({ clienteId, onBack }: ClientePerfilPr
       </div>
       
       <ModalNovoCliente isOpen={modalEdit} onClose={() => setModalEdit(false)} editData={cliente} />
+      <ModalExportarPDF 
+        isOpen={modalExport} 
+        onClose={() => setModalExport(false)} 
+        title={`Exportar Relatório - ${cliente.empresa || cliente.nome}`}
+        onExport={(start, end) => setPdfPeriod({start, end})}
+      />
+
+      {/* Hidden Div for PDF Generation */}
+      {pdfPeriod && (
+        <div style={{ display: 'none' }}>
+          <div id="pdf-content-cliente" className="p-8 bg-zinc-950 text-zinc-100">
+            <div className="flex items-center gap-4 border-b border-zinc-800 pb-6 mb-6">
+              <img src={cliente.logo || '/logo.png'} alt="Logo" className="w-16 h-16 object-contain" />
+              <div>
+                <h1 className="text-3xl font-bold">{cliente.empresa || cliente.nome}</h1>
+                <p className="text-zinc-400">Relatório de Performance | {new Date(pdfPeriod.start).toLocaleDateString('pt-BR')} a {new Date(pdfPeriod.end).toLocaleDateString('pt-BR')}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                <h3 className="text-sm font-bold text-zinc-400 uppercase">Receita Gerada (MRR)</h3>
+                <p className="text-2xl font-bold text-emerald-400 mt-2">R$ {cliente.mrr?.toLocaleString('pt-BR', {minimumFractionDigits:2}) || '0,00'}</p>
+              </div>
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+                <h3 className="text-sm font-bold text-zinc-400 uppercase">Demandas Concluídas</h3>
+                <p className="text-2xl font-bold text-indigo-400 mt-2">
+                  {tarefas.filter(t => t.cliente_id === cliente.id && t.status === 'Aprovado' && t.data_criacao >= pdfPeriod.start && t.data_criacao <= pdfPeriod.end).length}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h3 className="text-lg font-bold mb-4 border-b border-zinc-800 pb-2">Resumo das Demandas no Período</h3>
+              <table className="w-full text-sm text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-zinc-400">
+                    <th className="py-2">Título</th>
+                    <th className="py-2">Status</th>
+                    <th className="py-2">Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tarefas.filter(t => t.cliente_id === cliente.id && t.data_criacao >= pdfPeriod.start && t.data_criacao <= pdfPeriod.end).map(t => (
+                    <tr key={t.id} className="border-b border-zinc-800/50">
+                      <td className="py-2">{t.titulo}</td>
+                      <td className="py-2">{t.status}</td>
+                      <td className="py-2">{new Date(t.data_criacao).toLocaleDateString('pt-BR')}</td>
+                    </tr>
+                  ))}
+                  {tarefas.filter(t => t.cliente_id === cliente.id && t.data_criacao >= pdfPeriod.start && t.data_criacao <= pdfPeriod.end).length === 0 && (
+                    <tr><td colSpan={3} className="py-4 text-center text-zinc-500">Nenhuma demanda registrada neste período.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="text-center text-xs text-zinc-600 mt-10 pt-4 border-t border-zinc-800">
+              Relatório gerado automaticamente pelo sistema SenseOS em {new Date().toLocaleString('pt-BR')}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

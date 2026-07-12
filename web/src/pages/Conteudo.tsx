@@ -12,6 +12,7 @@ export default function ConteudoPage() {
   
   const [isGeneratingIdeas, setIsGeneratingIdeas] = useState(false);
   const [ideias, setIdeias] = useState<string[]>([]);
+  const [customNicho, setCustomNicho] = useState('');
   
   const [selectedIdeia, setSelectedIdeia] = useState<string | null>(null);
   const [isGeneratingScript, setIsGeneratingScript] = useState(false);
@@ -30,10 +31,10 @@ export default function ConteudoPage() {
     setScript(null);
     setSentToProd(false);
     
-    // Fallback if niche is empty
-    const nicho = cliente.segmento || cliente.servico || 'Geral';
+    // Usa o nicho que o usuário digitou/confirmou no input
+    const nichoFinal = customNicho.trim() || cliente.nicho || cliente.segmento || cliente.servico || 'Geral';
     
-    const novasIdeias = await generateContentIdeas(nicho, 5);
+    const novasIdeias = await generateContentIdeas(nichoFinal, 5);
     setIdeias(novasIdeias);
     setIsGeneratingIdeas(false);
   };
@@ -48,8 +49,8 @@ export default function ConteudoPage() {
     setScript(null);
     setSentToProd(false);
 
-    const nicho = cliente.segmento || cliente.servico || 'Geral';
-    const novoRoteiro = await generateScript(nicho, ideia);
+    const nichoFinal = customNicho.trim() || cliente.nicho || cliente.segmento || cliente.servico || 'Geral';
+    const novoRoteiro = await generateScript(nichoFinal, ideia);
     
     setScript(novoRoteiro);
     setIsGeneratingScript(false);
@@ -99,17 +100,41 @@ export default function ConteudoPage() {
                 className="w-full h-10 bg-zinc-950 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 value={selectedClienteId || ''}
                 onChange={(e) => {
-                  setSelectedClienteId(Number(e.target.value));
+                  const id = Number(e.target.value);
+                  setSelectedClienteId(id);
                   setIdeias([]);
                   setSelectedIdeia(null);
                   setScript(null);
+                  
+                  const c = clientes.find(client => client.id === id);
+                  if (c) {
+                    setCustomNicho(c.nicho || c.segmento || c.servico || '');
+                  } else {
+                    setCustomNicho('');
+                  }
                 }}
               >
                 <option value="">Escolha um cliente...</option>
                 {clientes.map(c => (
-                  <option key={c.id} value={c.id}>{c.nome} ({c.segmento || c.servico})</option>
+                  <option key={c.id} value={c.id}>{c.nome} ({c.segmento || c.nicho || c.servico})</option>
                 ))}
               </select>
+
+              {selectedClienteId && (
+                <div className="mt-4 space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
+                    Nicho Alvo (Editável)
+                  </label>
+                  <input 
+                    type="text" 
+                    value={customNicho}
+                    onChange={(e) => setCustomNicho(e.target.value)}
+                    placeholder="Ex: T.I, Saúde, Imóveis de luxo..."
+                    className="w-full h-10 bg-zinc-950 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  />
+                  <p className="text-[10px] text-zinc-500">Isso direciona a criatividade da IA.</p>
+                </div>
+              )}
 
               <Button 
                 onClick={handleGerarIdeias} 

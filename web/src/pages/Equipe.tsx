@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ModalNovoUsuario } from '../components/Modals';
-import { Edit2, Trash2, Plus } from 'lucide-react';
+import { ModalExportarPDF, generatePDFFromHTML } from '../components/ModalExportarPDF';
+import { Edit2, Trash2, Plus, Download } from 'lucide-react';
 import type { User } from '../data/types';
 
 export default function EquipePage() {
@@ -16,6 +17,18 @@ export default function EquipePage() {
   
   const [modalUsuario, setModalUsuario] = useState(false);
   const [editUsuario, setEditUsuario] = useState<User | undefined>(undefined);
+  const [selectedEmployeeForPDF, setSelectedEmployeeForPDF] = useState<User | null>(null);
+  const [pdfPeriod, setPdfPeriod] = useState<{start: string, end: string} | null>(null);
+
+  React.useEffect(() => {
+    if (pdfPeriod && selectedEmployeeForPDF) {
+      setTimeout(() => {
+        generatePDFFromHTML('pdf-content-equipe', `Relatorio_${selectedEmployeeForPDF.nome.replace(/\s+/g, '_')}.pdf`);
+        setPdfPeriod(null);
+        setSelectedEmployeeForPDF(null);
+      }, 500);
+    }
+  }, [pdfPeriod, selectedEmployeeForPDF]);
 
   const isAdmin = currentUser?.funcao === 'Admin' || currentUser?.funcao === 'Administrador';
 
@@ -56,7 +69,10 @@ export default function EquipePage() {
                       
                       {isAdmin && (
                         <div className="ml-auto flex gap-1">
-                          <button onClick={() => { setEditUsuario(member); setModalUsuario(true); }} className="p-1.5 bg-zinc-800 text-zinc-400 hover:text-white rounded-md transition-colors shadow-lg">
+                          <button onClick={() => setSelectedEmployeeForPDF(member)} className="p-1.5 bg-zinc-800 text-zinc-400 hover:text-white rounded-md transition-colors shadow-lg" title="Exportar Relatório">
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => { setEditUsuario(member); setModalUsuario(true); }} className="p-1.5 bg-zinc-800 text-zinc-400 hover:text-white rounded-md transition-colors shadow-lg" title="Editar">
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button onClick={() => { if(confirm('Excluir funcionário?')) deleteUser(member.id); }} className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-md transition-colors shadow-lg">
@@ -88,6 +104,79 @@ export default function EquipePage() {
         </CardContent>
       </Card>
       <ModalNovoUsuario isOpen={modalUsuario} onClose={() => { setModalUsuario(false); setEditUsuario(undefined); }} editData={editUsuario} />
+      
+      <ModalExportarPDF 
+        isOpen={!!selectedEmployeeForPDF && !pdfPeriod} 
+        onClose={() => setSelectedEmployeeForPDF(null)} 
+        title={`Relatório - ${selectedEmployeeForPDF?.nome}`}
+        onExport={(start, end) => setPdfPeriod({start, end})}
+      />
+
+      {/* Hidden Div for PDF Generation */}
+      {pdfPeriod && selectedEmployeeForPDF && (
+        <div style={{ display: 'none' }}>
+          <div id="pdf-content-equipe" className="p-8 bg-zinc-950 text-zinc-100">
+            <div className="flex items-center gap-4 border-b border-zinc-800 pb-6 mb-6">
+              <img src={selectedEmployeeForPDF.avatar || '/logo.png'} alt="Avatar" className="w-16 h-16 rounded-full object-cover border-2 border-zinc-700" />
+              <div>
+                <h1 className="text-3xl font-bold">{selectedEmployeeForPDF.nome}</h1>
+                <p className="text-zinc-400">Relatório de Produtividade | {selectedEmployeeForPDF.funcao}</p>
+                <p className="text-zinc-500 text-sm mt-1">{new Date(pdfPeriod.start).toLocaleDateString('pt-BR')} a {new Date(pdfPeriod.end).toLocaleDateString('pt-BR')}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 text-center">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase">Tarefas Entregues</h3>
+                <p className="text-2xl font-bold text-emerald-400 mt-2">
+                  {tarefas.filter(t => t.responsavel_id === selectedEmployeeForPDF.id && (t.status === 'Aprovado' || t.status === 'Fechado') && t.data_criacao >= pdfPeriod.start && t.data_criacao <= pdfPeriod.end).length}
+                </p>
+              </div>
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 text-center">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase">Atrasadas no Período</h3>
+                <p className="text-2xl font-bold text-rose-400 mt-2">
+                  {tarefas.filter(t => t.responsavel_id === selectedEmployeeForPDF.id && t.status === 'Atrasado' && t.data_criacao >= pdfPeriod.start && t.data_criacao <= pdfPeriod.end).length}
+                </p>
+              </div>
+              <div className="bg-zinc-900 p-4 rounded-xl border border-zinc-800 text-center">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase">Pendentes Atuais</h3>
+                <p className="text-2xl font-bold text-blue-400 mt-2">
+                  {tarefas.filter(t => t.responsavel_id === selectedEmployeeForPDF.id && t.status !== 'Aprovado' && t.status !== 'Fechado').length}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-8">
+              <h3 className="text-lg font-bold mb-4 border-b border-zinc-800 pb-2">Entregas no Período</h3>
+              <table className="w-full text-sm text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-zinc-800 text-zinc-400">
+                    <th className="py-2">Título</th>
+                    <th className="py-2">Prioridade</th>
+                    <th className="py-2">Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tarefas.filter(t => t.responsavel_id === selectedEmployeeForPDF.id && (t.status === 'Aprovado' || t.status === 'Fechado') && t.data_criacao >= pdfPeriod.start && t.data_criacao <= pdfPeriod.end).map(t => (
+                    <tr key={t.id} className="border-b border-zinc-800/50">
+                      <td className="py-2">{t.titulo}</td>
+                      <td className="py-2">{t.prioridade}</td>
+                      <td className="py-2">{new Date(t.data_criacao).toLocaleDateString('pt-BR')}</td>
+                    </tr>
+                  ))}
+                  {tarefas.filter(t => t.responsavel_id === selectedEmployeeForPDF.id && (t.status === 'Aprovado' || t.status === 'Fechado') && t.data_criacao >= pdfPeriod.start && t.data_criacao <= pdfPeriod.end).length === 0 && (
+                    <tr><td colSpan={3} className="py-4 text-center text-zinc-500">Nenhuma entrega registrada neste período.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="text-center text-xs text-zinc-600 mt-10 pt-4 border-t border-zinc-800">
+              Documento interno | Gerado automaticamente pelo sistema SenseOS em {new Date().toLocaleString('pt-BR')}
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

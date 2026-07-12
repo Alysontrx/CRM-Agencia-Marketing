@@ -1,9 +1,11 @@
 import './index.css';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AppProvider, useApp } from './context/AppContext';
 import LoginPage from './pages/LoginPage';
 import MainLayout from './pages/MainLayout';
 import ResetPassword from './pages/ResetPassword';
+import PlanejadorPage from './pages/Planejador';
 import { Loader2 } from 'lucide-react';
 
 function AgencyRouter() {
@@ -23,16 +25,19 @@ function AgencyRouter() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/*" element={
-          <AppProvider>
-            <AgencyRouter />
-          </AppProvider>
-        } />
-      </Routes>
-    </BrowserRouter>
+    <GoogleOAuthProvider clientId="767960843931-b3akclvcgpg2i461pno3dgipals62n71.apps.googleusercontent.com">
+      <BrowserRouter>
+        <Routes>
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/planejador" element={<PlanejadorPage />} />
+          <Route path="/*" element={
+            <AppProvider>
+              <AgencyRouter />
+            </AppProvider>
+          } />
+        </Routes>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
 

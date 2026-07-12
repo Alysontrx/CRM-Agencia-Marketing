@@ -212,25 +212,67 @@ Exemplo:
 }
 
 export async function askCopilot(
-  history: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
-  contextData: string
+  history: Array<{ role: 'user' | 'assistant' | 'system'; content: any }>,
+  contextData: string,
+  clientContext?: string,
+  fileContext?: string,
+  imageBase64?: string
 ): Promise<string> {
   if (!GROQ_API_KEY) return "Erro: Chave da Groq API não configurada.";
 
-  const systemPrompt = `Você é o "Copilot Inteligente", a Inteligência Artificial super avançada embutida no CRM. 
-Você ajuda a equipe da agência (vendedores, designers, gestores) a tomar decisões rápidas e gerar conteúdo.
-Seja sempre direto, profissional e inspirador. Não dê respostas desnecessariamente longas a menos que peçam.
+  let systemPrompt = `Você é o "Copilot Inteligente", um Copywriter Sênior e estrategista de marketing super avançado embutido no CRM. 
+Você ajuda a equipe da agência a gerar conteúdo profissional.
+Regra de Ouro: NUNCA inicie a resposta conversando com o usuário (ex: "Entendi!", "Vou criar..."). Entregue DIRETAMENTE o conteúdo solicitado, sem aspas e sem explicações.
 
 Abaixo estão os dados em tempo real da agência no momento atual. Use essas informações caso o usuário pergunte sobre clientes, leads ou tarefas.
-Se o usuário pedir uma cópia, legenda ou planejamento, use sua inteligência de marketing para criar algo de altíssimo nível.
-
 --- DADOS ATUAIS DA AGÊNCIA ---
 ${contextData}
 -------------------------------`;
 
+  if (clientContext) {
+    systemPrompt += `\n\nATENÇÃO: Você está criando conteúdo para o cliente: "${clientContext}". 
+Foque ESTRITAMENTE no nicho dele. NUNCA mencione que você é uma inteligência artificial.`;
+  }
+
+  let finalHistory = [...history];
+
+  if (fileContext && finalHistory.length > 0) {
+    const lastMsgIndex = finalHistory.length - 1;
+    if (finalHistory[lastMsgIndex].role === 'user') {
+      finalHistory[lastMsgIndex].content += `\n\n[DIRETRIZES OBRIGATÓRIAS DO DIRETOR DE CRIAÇÃO]: 
+Você DEVE escrever a legenda no formato perfeito para o INSTAGRAM.
+Siga EXATAMENTE esta estrutura:
+1. **Gancho (Hook):** Uma frase curta e chamativa na primeira linha (com 1 emoji).
+2. **Corpo do Texto:** 2 a 3 parágrafos curtos explicando o benefício/solução. Use quebras de linha para ficar fácil de ler no celular.
+3. **Chamada para Ação (CTA):** Diga exatamente o que o usuário deve fazer (ex: clique no link, mande direct).
+4. **Hashtags:** 3 a 5 hashtags focadas.
+
+[IMPORTANTE - SOBRE O TOM DE VOZ]:
+Use o arquivo abaixo APENAS para absorver as gírias, o humor ou o nível de formalidade do cliente. 
+NÃO copie e cole frases do arquivo! Você é um Copywriter Sênior, então eleve o nível do texto. Aplique as gírias de forma inteligente dentro da estrutura de Instagram acima.
+Retorne SOMENTE a legenda final.
+
+--- INÍCIO DO VOCABULÁRIO ---
+${fileContext}
+--- FIM DO VOCABULÁRIO ---`;
+    }
+  }
+
+  // Se tiver imagem em base64, altera a estrutura da última mensagem
+  if (imageBase64 && finalHistory.length > 0) {
+    const lastMsgIndex = finalHistory.length - 1;
+    if (finalHistory[lastMsgIndex].role === 'user') {
+      const textContent = finalHistory[lastMsgIndex].content;
+      finalHistory[lastMsgIndex].content = [
+        { type: "text", text: textContent },
+        { type: "image_url", image_url: { url: imageBase64 } }
+      ];
+    }
+  }
+
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...history
+    ...finalHistory
   ];
 
   try {
@@ -241,7 +283,7 @@ ${contextData}
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: imageBase64 ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.1-8b-instant',
         messages: messages,
         temperature: 0.7,
         max_tokens: 800
@@ -249,7 +291,10 @@ ${contextData}
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || 'Erro na API');
+    if (!response.ok) {
+      console.error('Groq API Error:', data);
+      throw new Error(`Erro Groq: ${data.error?.message || JSON.stringify(data)}`);
+    }
 
     return data.choices?.[0]?.message?.content || 'Desculpe, não consegui processar a resposta.';
   } catch (err: any) {
