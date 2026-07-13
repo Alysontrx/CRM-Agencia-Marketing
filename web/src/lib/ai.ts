@@ -302,3 +302,43 @@ ${fileContext}
     throw err;
   }
 }
+
+export async function generateDashboardInsight(
+  tarefas: any[],
+  clientes: any[],
+  leads: any[]
+): Promise<string> {
+  if (!GROQ_API_KEY) return 'Nota da IA: API Key da Groq não configurada. Configure o .env para ter insights reais.';
+
+  const activeTasks = tarefas.filter(t => t.status !== 'Concluído').length;
+  const pendingLeads = leads.filter(l => l.status === 'Prospect' || l.status === 'Negociação').length;
+  
+  const prompt = `Você é o assistente IA do painel desta agência de marketing.
+Analise os seguintes números de forma EXTREMAMENTE breve (1 frase curta).
+- Tarefas ativas/pendentes: ${activeTasks}
+- Leads em negociação/prospect: ${pendingLeads}
+- Total de clientes: ${clientes.length}
+
+Retorne APENAS uma frase útil sugerindo foco ou dando um alerta amigável. Não use aspas, nem saudações.`;
+
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.5,
+        max_tokens: 60
+      })
+    });
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content?.trim() || 'Foque nas tarefas com prazo próximo hoje!';
+  } catch (err) {
+    return 'Dica: Organize suas prioridades do dia no Kanban para manter o fluxo.';
+  }
+}

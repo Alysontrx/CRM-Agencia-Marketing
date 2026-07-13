@@ -10,7 +10,7 @@ export function WidgetEquipe() {
 
   return (
     <WidgetContainer id="equipe" title="Equipe & Capacidade" icon={<Users className="w-5 h-5 text-fuchsia-500" />}>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
         {users.map(u => {
           const abertas = tarefas.filter(t => t.responsavel_id === u.id && t.status !== 'Feito' && t.status !== 'Aprovado' && t.status !== 'Fechado').length;
           const concluidas = tarefas.filter(t => t.responsavel_id === u.id && (t.status === 'Feito' || t.status === 'Aprovado' || t.status === 'Fechado')).length;

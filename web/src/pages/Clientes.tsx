@@ -87,8 +87,8 @@ export default function ClientesPage({ onNavigateToPerfil }: ClientesPageProps) 
           )}
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-x-auto shadow-2xl">
+            <table className="w-full text-sm text-left min-w-[600px]">
               <thead className="text-xs text-zinc-500 uppercase bg-zinc-950/20">
                 <tr>
                   <th className="px-6 py-4 font-semibold tracking-wider">Cliente</th>

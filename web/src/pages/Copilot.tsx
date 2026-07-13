@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { askCopilot } from '../lib/ai';
-import { Send, Bot, User, Sparkles, Loader2, X, Paperclip, MessageSquare, FileText, Info, UploadCloud, Image as ImageIcon } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Loader2, X, Paperclip, MessageSquare, FileText, Info, UploadCloud, Image as ImageIcon, Calendar, CheckCircle2 } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -52,6 +52,11 @@ export default function CopilotPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const activeMessages = allChats[activeChatId] || [];
   const fileContext = allVocabs[activeChatId] || null;
+
+  // Estado para o Modal de salvar no Planejador
+  const [plannerModalOpen, setPlannerModalOpen] = useState(false);
+  const [plannerData, setPlannerData] = useState<{ image: string; caption: string; date: string; clienteId: number | '' }>({ image: '', caption: '', date: '', clienteId: '' });
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -199,6 +204,48 @@ Resumo da Agência:
     }
   };
 
+  const findAssociatedImage = (currentIndex: number) => {
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (activeMessages[i].role === 'user' && activeMessages[i].image) {
+        return activeMessages[i].image;
+      }
+    }
+    return null;
+  };
+
+  const handleOpenPlannerModal = (caption: string, image: string) => {
+    setPlannerData({
+      image,
+      caption,
+      date: new Date().toISOString().split('T')[0],
+      clienteId: activeChatId !== 'geral' ? Number(activeChatId) : ''
+    });
+    setSaveSuccess(false);
+    setPlannerModalOpen(true);
+  };
+
+  const handleSaveToPlanner = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!plannerData.clienteId || !plannerData.date || !plannerData.image) return;
+
+    const saved = localStorage.getItem('sense-planejador-posts');
+    const posts = saved ? JSON.parse(saved) : [];
+
+    const newPost = {
+      id: Date.now().toString(),
+      cliente_id: Number(plannerData.clienteId),
+      date: plannerData.date,
+      image: plannerData.image,
+      caption: plannerData.caption
+    };
+
+    localStorage.setItem('sense-planejador-posts', JSON.stringify([...posts, newPost]));
+    setSaveSuccess(true);
+    setTimeout(() => {
+      setPlannerModalOpen(false);
+    }, 2000);
+  };
+
   const activeClientName = activeChatId === 'geral' ? 'Agência Geral' : clientes.find(c => c.id.toString() === activeChatId)?.nome || 'Cliente';
 
   return (
@@ -297,24 +344,38 @@ Resumo da Agência:
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar scroll-smooth">
-          {activeMessages.map((msg) => (
-            <div key={msg.id} className={`flex gap-4 max-w-[90%] sm:max-w-[85%] ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-sm ${msg.role === 'user' ? 'bg-zinc-800 border border-zinc-700' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
-                {msg.role === 'user' ? <User className="w-4 h-4 text-zinc-300" /> : <Bot className="w-4 h-4 text-white" />}
+          {activeMessages.map((msg, idx) => {
+            const assocImage = msg.role === 'assistant' ? findAssociatedImage(idx) : null;
+            
+            return (
+              <div key={msg.id} className={`flex gap-4 max-w-[90%] sm:max-w-[85%] ${msg.role === 'user' ? 'ml-auto flex-row-reverse' : ''}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 shadow-sm ${msg.role === 'user' ? 'bg-zinc-800 border border-zinc-700' : 'bg-gradient-to-br from-blue-500 to-purple-600'}`}>
+                  {msg.role === 'user' ? <User className="w-4 h-4 text-zinc-300" /> : <Bot className="w-4 h-4 text-white" />}
+                </div>
+                
+                <div className={`p-4 rounded-2xl shadow-sm flex flex-col gap-3 ${msg.role === 'user' ? 'bg-zinc-800 text-zinc-200 rounded-tr-sm' : 'bg-zinc-900/80 border border-zinc-800/50 text-zinc-300 rounded-tl-sm'}`}>
+                  {msg.image && (
+                    <img src={msg.image} alt="Anexo do usuário" className="max-w-[300px] max-h-[300px] object-contain rounded-lg border border-zinc-700" />
+                  )}
+                  {msg.content && (
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                      {msg.content}
+                    </div>
+                  )}
+                  {msg.role === 'assistant' && assocImage && (
+                    <div className="pt-2 border-t border-zinc-800/50 flex justify-end mt-1">
+                      <button 
+                        onClick={() => handleOpenPlannerModal(msg.content, assocImage)}
+                        className="text-xs font-medium bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                      >
+                        <Calendar className="w-3.5 h-3.5" /> Enviar para o Planejador
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              
-              <div className={`p-4 rounded-2xl shadow-sm flex flex-col gap-3 ${msg.role === 'user' ? 'bg-zinc-800 text-zinc-200 rounded-tr-sm' : 'bg-zinc-900/80 border border-zinc-800/50 text-zinc-300 rounded-tl-sm'}`}>
-                {msg.image && (
-                  <img src={msg.image} alt="Anexo do usuário" className="max-w-[300px] max-h-[300px] object-contain rounded-lg border border-zinc-700" />
-                )}
-                {msg.content && (
-                  <div className="text-sm whitespace-pre-wrap leading-relaxed">
-                    {msg.content}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
 
           {isLoading && (
             <div className="flex gap-4 max-w-[85%]">
@@ -397,6 +458,62 @@ Resumo da Agência:
           </div>
         </div>
       </div>
+
+      {/* Modal para Salvar no Planejador */}
+      {plannerModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
+              <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-500" /> 
+                Agendar no Planejador
+              </h3>
+              <button onClick={() => setPlannerModalOpen(false)} className="text-zinc-400 hover:text-white"><X className="w-5 h-5"/></button>
+            </div>
+            
+            <form onSubmit={handleSaveToPlanner} className="p-6 flex flex-col gap-5">
+              <div className="flex gap-4 p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+                <img src={plannerData.image} alt="Preview" className="w-16 h-16 object-cover rounded bg-black" />
+                <p className="text-xs text-zinc-400 line-clamp-4 flex-1">{plannerData.caption}</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-300">Cliente</label>
+                <select 
+                  required
+                  value={plannerData.clienteId}
+                  onChange={e => setPlannerData({...plannerData, clienteId: e.target.value ? Number(e.target.value) : ''})}
+                  className="w-full h-10 bg-zinc-950 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:ring-2 focus:ring-blue-500/50"
+                >
+                  <option value="">Selecione o Cliente...</option>
+                  {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-zinc-300">Data do Post</label>
+                <input 
+                  type="date" 
+                  required
+                  value={plannerData.date}
+                  onChange={e => setPlannerData({...plannerData, date: e.target.value})}
+                  className="w-full h-10 bg-zinc-950 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:ring-2 focus:ring-blue-500/50 color-scheme-dark"
+                />
+              </div>
+
+              <div className="mt-2 flex justify-end gap-3">
+                <button type="button" onClick={() => setPlannerModalOpen(false)} className="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={saveSuccess} className={`px-6 py-2 rounded-lg font-medium shadow-lg transition-colors flex items-center justify-center min-w-[140px] ${saveSuccess ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}>
+                  {saveSuccess ? <><CheckCircle2 className="w-4 h-4 mr-2" /> Salvo!</> : 'Salvar Post'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

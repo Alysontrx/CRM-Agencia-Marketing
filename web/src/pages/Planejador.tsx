@@ -22,7 +22,38 @@ export default function PlanejadorPage() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
   // Todos os posts salvos
-  const [posts, setPosts] = useState<PostPlanner[]>([]);
+  const [posts, setPosts] = useState<PostPlanner[]>(() => {
+    const saved = localStorage.getItem('sense-planejador-posts');
+    if (saved && saved !== '[]') {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.length > 0) return parsed;
+      } catch (e) {
+        console.error('Erro ao ler posts', e);
+      }
+    }
+    
+    // Dados fictícios para caso esteja vazio
+    const hoje = new Date();
+    const proximaSemana = new Date(hoje); proximaSemana.setDate(hoje.getDate() + 3);
+    
+    return [
+      {
+        id: 'mock1',
+        cliente_id: clientes[0]?.id || 1,
+        date: hoje.toISOString().split('T')[0],
+        image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        caption: 'O inverno chegou! ❄️🧥 E com ele, as melhores tendências de moda para você arrasar.\n\n#Inverno #Moda2026'
+      },
+      {
+        id: 'mock2',
+        cliente_id: clientes[0]?.id || 1,
+        date: proximaSemana.toISOString().split('T')[0],
+        image: 'https://images.unsplash.com/photo-1515347619152-198158586c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
+        caption: 'Acessórios que transformam qualquer look básico. Qual o seu favorito? 👇✨\n\n#Acessorios #Estilo'
+      }
+    ];
+  });
 
   // Modal Novo Post
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,17 +61,6 @@ export default function PlanejadorPage() {
   const [newPostCaption, setNewPostCaption] = useState('');
   const [newPostImage, setNewPostImage] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('sense-planejador-posts');
-    if (saved) {
-      try {
-        setPosts(JSON.parse(saved));
-      } catch (e) {
-        console.error('Erro ao ler posts', e);
-      }
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('sense-planejador-posts', JSON.stringify(posts));

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
+import { useReactToPrint } from 'react-to-print';
 import { 
   ArrowLeft, Building2, User, Mail, Phone, MapPin, 
   Calendar, CreditCard, Tag, FileText, CheckCircle2, 
@@ -11,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ModalNovoCliente } from '../components/Modals';
-import { ModalExportarPDF, generatePDFFromHTML } from '../components/ModalExportarPDF';
+import { ModalExportarPDF } from '../components/ModalExportarPDF';
 import { Download } from 'lucide-react';
 
 interface ClientePerfilProps {
@@ -20,19 +21,28 @@ interface ClientePerfilProps {
 }
 
 export default function ClientePerfilPage({ clienteId, onBack }: ClientePerfilProps) {
-  const { clientes, tarefas, projetos, conteudos, financeiro, arquivos, historico, users } = useApp();
+  const { clientes, tarefas, users } = useApp();
+  
   const cliente = clientes.find(c => c.id === clienteId);
   const [activeTab, setActiveTab] = useState('visao-geral');
   const [modalEdit, setModalEdit] = useState(false);
   const [modalExport, setModalExport] = useState(false);
   const [pdfPeriod, setPdfPeriod] = useState<{start: string, end: string} | null>(null);
 
+  const pdfRef = useRef<HTMLDivElement>(null);
+
+  const handlePrint = useReactToPrint({
+    contentRef: pdfRef,
+    documentTitle: cliente ? `Relatorio_${cliente.empresa || cliente.nome}` : 'Relatorio',
+    onAfterPrint: () => {
+      setPdfPeriod(null);
+    }
+  });
+
   React.useEffect(() => {
-    if (pdfPeriod) {
-      // Delay for React to re-render the hidden div with filtered data
+    if (pdfPeriod && pdfRef.current) {
       setTimeout(() => {
-        generatePDFFromHTML('pdf-content-cliente', `Relatorio_${cliente?.empresa || cliente?.nome || 'Cliente'}.pdf`);
-        setPdfPeriod(null);
+        handlePrint();
       }, 500);
     }
   }, [pdfPeriod, cliente]);
@@ -188,8 +198,8 @@ export default function ClientePerfilPage({ clienteId, onBack }: ClientePerfilPr
               <h2 className="text-lg font-bold text-zinc-100">Demandas do Cliente</h2>
               <Button className="bg-indigo-600 hover:bg-indigo-700 text-white"><Plus className="w-4 h-4 mr-2"/> Nova Demanda</Button>
             </div>
-            <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-              <table className="w-full text-sm text-left">
+            <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-x-auto">
+              <table className="w-full text-sm text-left min-w-[500px]">
                 <thead className="bg-zinc-950/50 text-zinc-400">
                   <tr>
                     <th className="px-4 py-3 font-medium">Nome</th>
@@ -327,7 +337,7 @@ export default function ClientePerfilPage({ clienteId, onBack }: ClientePerfilPr
       {/* Hidden Div for PDF Generation */}
       {pdfPeriod && (
         <div style={{ display: 'none' }}>
-          <div id="pdf-content-cliente" className="p-8 bg-zinc-950 text-zinc-100">
+          <div ref={pdfRef} id="pdf-content-cliente" className="p-8 bg-zinc-950 text-zinc-100">
             <div className="flex items-center gap-4 border-b border-zinc-800 pb-6 mb-6">
               <img src={cliente.logo || '/logo.png'} alt="Logo" className="w-16 h-16 object-contain" />
               <div>

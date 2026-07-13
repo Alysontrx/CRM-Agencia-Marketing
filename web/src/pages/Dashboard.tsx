@@ -33,7 +33,7 @@ import {
 
 type WidgetId = 'kpis' | 'prioridades' | 'agenda' | 'projetos' | 'equipe' | 'tarefas_equipe' | 'comercial' | 'financeiro' | 'conteudo' | 'ia' | 'timeline' | 'suporte';
 
-const WIDGETS_MAP: Record<WidgetId, React.FC> = {
+const WIDGETS_MAP: Record<WidgetId, React.FC<any>> = {
   'kpis': WidgetKPIs,
   'prioridades': WidgetPrioridades,
   'agenda': WidgetAgenda,
@@ -170,8 +170,7 @@ export default function DashboardPage({ onNavigate }: { onNavigate?: (page: stri
               if (!WidgetComponent) return null;
               
               // Determine if it should span multiple columns based on its ID
-              // kpis, financeiro, projetos often look better full width
-              const fullWidthIds = ['kpis', 'financeiro', 'projetos'];
+              const fullWidthIds = ['kpis', 'financeiro', 'projetos', 'equipe', 'tarefas_equipe', 'ia'];
               const isFullWidth = fullWidthIds.includes(widgetId);
               
               return (
@@ -182,7 +181,7 @@ export default function DashboardPage({ onNavigate }: { onNavigate?: (page: stri
                   transition={{ delay: idx * 0.05 + 0.1 }}
                   className={isFullWidth ? 'md:col-span-2 lg:col-span-3' : 'col-span-1'}
                 >
-                  <WidgetComponent />
+                  <WidgetComponent onNavigate={onNavigate} />
                 </motion.div>
               );
             })}

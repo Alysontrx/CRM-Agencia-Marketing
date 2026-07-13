@@ -124,7 +124,7 @@ export default function KanbanPage() {
                 </Badge>
               </div>
 
-              <div className="bg-zinc-900/40 backdrop-blur-xl border border-zinc-800/80 rounded-2xl shadow-2xl overflow-x-auto custom-scrollbar">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-x-auto mt-6 shadow-xl relative z-0">
                 <table className="w-full min-w-[1000px] text-left text-sm whitespace-nowrap">
                   <thead className="bg-zinc-950/80 border-b border-zinc-800 text-zinc-400 font-semibold uppercase tracking-wider text-xs">
                     <tr>

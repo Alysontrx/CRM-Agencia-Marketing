@@ -22,7 +22,8 @@ interface AppContextType {
   loadingData: boolean;
   login: (email: string) => Promise<boolean>;
   logout: () => void;
-  updateTarefa: (id: number, changes: Partial<TarefaData>) => Promise<void>;
+  updateTarefaStatus: (tarefaId: number, newStatus: string) => Promise<void>;
+  updateTarefa: (id: number, updates: Partial<Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios'>>) => Promise<void>;
   updateLead: (id: number, changes: Partial<LeadData>) => Promise<void>;
   updateCliente: (id: number, changes: Partial<ClienteData>) => Promise<void>;
   updateMetrica: (id: number, changes: Partial<MetricaData>) => Promise<void>;
@@ -31,7 +32,7 @@ interface AppContextType {
   deleteCliente: (id: number) => Promise<void>;
   deleteMetrica: (id: number) => Promise<void>;
   addComentario: (tarefaId: number, texto: string) => Promise<void>;
-  addTarefa: (tarefa: Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios'>) => Promise<void>;
+  addTarefa: (tarefa: Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios'>, googleSyncData?: { isAllDay?: boolean; endDateTime?: string }) => Promise<void>;
   addCliente: (cliente: Omit<ClienteData, 'id' | 'status_geral' | 'progresso'>) => Promise<void>;
   addLead: (lead: Omit<LeadData, 'id' | 'data_criacao' | 'nota_ia' | 'resumo_ia'>) => Promise<void>;
   addMetrica: (metrica: Omit<MetricaData, 'id'>) => Promise<void>;
@@ -95,13 +96,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         ]);
 
         if (resClientes.data) setClientes(resClientes.data);
-        if (resLeads.data) setLeads(resLeads.data);
-        if (resTarefas.data) setTarefas(resTarefas.data);
+        if (resLeads.data) setLeads(resLeads.data.map((l: any) => ({...l, data_criacao: l.data_criacao || l.criado_em || l.created_at})));
+        if (resTarefas.data) setTarefas(resTarefas.data.map((t: any) => ({...t, data_criacao: t.data_criacao || t.criado_em || t.created_at})));
         if (resMetricas.data) setMetricas(resMetricas.data);
-        if (resNotificacoes.data) setNotificacoes(resNotificacoes.data);
+        if (resNotificacoes.data) setNotificacoes(resNotificacoes.data.map((n: any) => ({...n, data_criacao: n.data_criacao || n.criado_em || n.created_at})));
         if (resUsers.data) setUsers(resUsers.data.map((u: any) => ({ ...u, avatar: u.avatar_url })));
         if (resProj.data) setProjetos(resProj.data);
-        if (resCont.data) setConteudos(resCont.data);
+        if (resCont.data) setConteudos(resCont.data.map((c: any) => ({...c, data_criacao: c.data_criacao || c.criado_em || c.created_at})));
         if (resFin.data) setFinanceiro(resFin.data);
         if (resArq.data) setArquivos(resArq.data);
         if (resHist.data) setHistorico(resHist.data);
@@ -127,9 +128,32 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentUser(null);
   };
 
-  const updateTarefa = async (id: number, changes: Partial<TarefaData>) => {
-    setTarefas(prev => prev.map(t => t.id === id ? { ...t, ...changes } : t));
-    await supabase.from('tarefas').update(changes).eq('id', id);
+  const updateTarefaStatus = async (tarefaId: number, newStatus: string) => {
+    const { error } = await supabase.from('tarefas').update({ status: newStatus }).eq('id', tarefaId);
+    if (!error) {
+      setTarefas(prev => prev.map(t => t.id === tarefaId ? { ...t, status: newStatus } : t));
+    }
+  };
+
+  const updateTarefa = async (id: number, updates: Partial<Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios'>>) => {
+    const { error } = await supabase.from('tarefas').update(updates).eq('id', id);
+    if (!error) {
+      setTarefas(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    } else {
+      console.error('Erro ao atualizar Tarefa:', error);
+      alert('Erro ao atualizar tarefa');
+    }
+  };
+
+  const deleteTarefa = async (id: number) => {
+    const { error } = await supabase.from('tarefas').delete().eq('id', id);
+    if (!error) {
+      setTarefas(prev => prev.filter(t => t.id !== id));
+      addNotificacao('Tarefa excluída.', 'info');
+    } else {
+      console.error('Erro ao excluir Tarefa:', error);
+      alert('Erro ao excluir tarefa');
+    }
   };
 
   const updateLead = async (id: number, changes: Partial<LeadData>) => {
@@ -145,12 +169,6 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const updateMetrica = async (id: number, changes: Partial<MetricaData>) => {
     setMetricas(prev => prev.map(m => m.id === id ? { ...m, ...changes } : m));
     await supabase.from('metricas').update(changes).eq('id', id);
-  };
-
-  const deleteTarefa = async (id: number) => {
-    setTarefas(prev => prev.filter(t => t.id !== id));
-    await supabase.from('tarefas').delete().eq('id', id);
-    addNotificacao('Tarefa excluída.', 'info');
   };
 
   const deleteLead = async (id: number) => {
@@ -194,14 +212,79 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.from('tarefas').update({ comentarios: novosComentarios }).eq('id', tarefaId);
   };
 
-  const addTarefa = async (tarefa: Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios'>) => {
+  const addTarefa = async (tarefa: Omit<TarefaData, 'id' | 'data_criacao' | 'comentarios'>, googleSyncData?: { isAllDay?: boolean; endDateTime?: string }) => {
     if (!currentUser) return;
     const { data, error } = await supabase.from('tarefas').insert([tarefa]).select().single();
     if (error) {
       console.error('Erro ao adicionar Tarefa:', error);
       alert(`Erro ao adicionar tarefa. \nDetalhes: ${error.message}`);
     }
-    if (data && !error) setTarefas(prev => [data, ...prev]);
+    if (data && !error) {
+      setTarefas(prev => [data, ...prev]);
+
+      // Sincronizar com o Google Calendar caso tenha um prazo e o usuário esteja logado com o Google
+      if (tarefa.prazo) {
+        const token = localStorage.getItem('@crm_google_token');
+        const calendarId = import.meta.env.VITE_GOOGLE_CALENDAR_ID || 'primary';
+        if (token) {
+          const start = new Date(tarefa.prazo);
+          
+          let gStart: any;
+          let gEnd: any;
+          
+          if (googleSyncData?.isAllDay) {
+            const dateStr = start.toISOString().split('T')[0];
+            gStart = { date: dateStr };
+            const nextDay = new Date(start);
+            nextDay.setDate(nextDay.getDate() + 1);
+            gEnd = { date: nextDay.toISOString().split('T')[0] };
+          } else {
+            gStart = { dateTime: start.toISOString() };
+            if (googleSyncData?.endDateTime) {
+              gEnd = { dateTime: new Date(googleSyncData.endDateTime).toISOString() };
+            } else {
+              gEnd = { dateTime: new Date(start.getTime() + (60 * 60 * 1000)).toISOString() };
+            }
+          }
+          
+          // Map CRM Sector to Google Calendar colorId
+          let gColorId = '9'; // Blueberry (Default Blue)
+          if (tarefa.setor === 'Reunião') gColorId = '11'; // Tomato (Red)
+          else if (tarefa.setor === 'Design') gColorId = '10'; // Basil (Green)
+          else if (tarefa.setor === 'Marketing') gColorId = '6'; // Tangerine (Orange)
+          else if (tarefa.setor === 'Outros') gColorId = '3'; // Grape (Purple)
+
+          fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              summary: `[Sense] ${tarefa.titulo}`,
+              description: `Setor: ${tarefa.setor} | Prioridade: ${tarefa.prioridade}`,
+              colorId: gColorId,
+              start: gStart,
+              end: gEnd
+            })
+          }).then(async res => {
+            if (!res.ok) {
+              if (res.status === 401) {
+                localStorage.removeItem('@crm_google_token');
+                alert('A sua conexão com o Google Agenda expirou! Por favor, vá até o menu "Calendário" e clique em "Conectar Google Agenda" novamente.');
+              } else {
+                const errText = await res.text();
+                console.error('Google API Error:', errText);
+                alert(`Erro na sincronização com o Google: ${res.status} - ${errText}`);
+              }
+            }
+          }).catch(err => {
+            console.error('Erro de rede ao sincronizar tarefa com Google Calendar:', err);
+            alert(`Erro de rede Google Calendar: ${err.message}`);
+          });
+        }
+      }
+    }
   };
 
   const addCliente = async (cliente: Omit<ClienteData, 'id' | 'status_geral' | 'progresso'>) => {
@@ -354,7 +437,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <AppContext.Provider value={{
       currentUser, users, clientes, leads, tarefas, correcoes, metricas, notificacoes, projetos, conteudos, financeiro, arquivos, historico, loadingData,
-      login, logout, updateTarefa, updateLead, updateCliente, updateMetrica, 
+      login, logout, updateTarefaStatus, updateTarefa, updateLead, updateCliente, updateMetrica, 
       deleteTarefa, deleteLead, deleteCliente, deleteMetrica,
       addComentario, addTarefa, addCliente, addLead, addMetrica, addNotificacao, marcarNotificacaoLida, addUser, updateUser, deleteUser, setTarefas, setClientes, setLeads, setUsers,
       addProjeto, addConteudo, addFinanceiro, addArquivo, addHistorico

@@ -10,8 +10,8 @@ export function WidgetProjetos() {
 
   return (
     <WidgetContainer id="projetos" title="Projetos em Andamento" icon={<FolderKanban className="w-5 h-5 text-indigo-500" />} fullWidth>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left border-collapse">
+      <div className="overflow-x-auto mt-2">
+        <table className="w-full text-sm text-left border-collapse min-w-[400px]">
           <thead>
             <tr className="border-b border-zinc-800/50 text-zinc-500">
               <th className="pb-3 font-medium uppercase tracking-wider text-xs">Projeto</th>

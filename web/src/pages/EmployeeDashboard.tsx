@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function EmployeeDashboard() {
-  const { currentUser, tarefas, clientes, users } = useApp();
+  const { currentUser, tarefas, clientes, users, notificacoes } = useApp();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -27,6 +27,18 @@ export default function EmployeeDashboard() {
   const atrasadas = minhasTarefas.filter(t => t.status === 'Atrasado');
   const aprovacoes = minhasTarefas.filter(t => t.status === 'Aguardando revisão');
   const concluidas = minhasTarefas.filter(t => t.status === 'Feito' || t.status === 'Aprovado');
+
+  const reunioesHoje = minhasTarefas.filter(t => {
+    if (t.setor !== 'Reunião' || !t.prazo) return false;
+    return new Date(t.prazo).toDateString() === new Date().toDateString();
+  });
+
+  const agendaTarefas = minhasTarefas
+    .filter(t => t.prazo && t.status !== 'Feito' && t.status !== 'Aprovado')
+    .sort((a, b) => new Date(a.prazo!).getTime() - new Date(b.prazo!).getTime())
+    .slice(0, 4);
+
+  const recentTimeline = (notificacoes || []).slice(0, 4);
 
   const greeting = currentTime.getHours() < 12 ? 'Bom dia' : currentTime.getHours() < 18 ? 'Boa tarde' : 'Boa noite';
 
@@ -100,7 +112,7 @@ export default function EmployeeDashboard() {
             </div>
             <div>
               <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-0.5">Reuniões Hoje</p>
-              <h3 className="text-2xl font-black text-zinc-100">0</h3>
+              <h3 className="text-2xl font-black text-zinc-100">{reunioesHoje.length}</h3>
             </div>
           </div>
         </div>
@@ -164,26 +176,30 @@ export default function EmployeeDashboard() {
               <h2 className="text-lg font-bold text-white">Minha Agenda</h2>
             </div>
             <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 space-y-4">
-              <div className="relative pl-6 pb-4 border-l border-zinc-800">
-                <div className="absolute w-3 h-3 bg-zinc-800 rounded-full -left-[6.5px] top-1 border-2 border-zinc-950" />
-                <p className="text-xs font-bold text-blue-400 mb-0.5">09:00</p>
-                <p className="text-sm font-bold text-zinc-200">Reunião Cliente XPTO</p>
-              </div>
-              <div className="relative pl-6 pb-4 border-l border-zinc-800">
-                <div className="absolute w-3 h-3 bg-zinc-800 rounded-full -left-[6.5px] top-1 border-2 border-zinc-950" />
-                <p className="text-xs font-bold text-emerald-400 mb-0.5">11:30</p>
-                <p className="text-sm font-bold text-zinc-200">Entrega Landing Page</p>
-              </div>
-              <div className="relative pl-6 pb-4 border-l border-zinc-800">
-                <div className="absolute w-3 h-3 bg-zinc-800 rounded-full -left-[6.5px] top-1 border-2 border-zinc-950" />
-                <p className="text-xs font-bold text-purple-400 mb-0.5">14:00</p>
-                <p className="text-sm font-bold text-zinc-200">Publicação Instagram</p>
-              </div>
-              <div className="relative pl-6">
-                <div className="absolute w-3 h-3 bg-zinc-800 rounded-full -left-[6.5px] top-1 border-2 border-zinc-950" />
-                <p className="text-xs font-bold text-amber-400 mb-0.5">16:00</p>
-                <p className="text-sm font-bold text-zinc-200">Correção Site</p>
-              </div>
+              {agendaTarefas.length > 0 ? (
+                agendaTarefas.map((t, idx) => {
+                  const cores = ['text-blue-400', 'text-emerald-400', 'text-purple-400', 'text-amber-400'];
+                  const corClass = cores[idx % cores.length];
+                  const dataPrazo = new Date(t.prazo!);
+                  const isToday = dataPrazo.toDateString() === new Date().toDateString();
+                  // Check if time is 00:00 (or if it just has a date)
+                  const timeString = isToday ? format(dataPrazo, 'HH:mm') : format(dataPrazo, 'dd/MM');
+                  const displayTime = (timeString === '00:00' || timeString === '21:00') ? 'Até ' + format(dataPrazo, 'dd/MM') : timeString;
+                  
+                  return (
+                    <div key={t.id} className="relative pl-6 pb-4 border-l border-zinc-800 last:border-transparent last:pb-0">
+                      <div className="absolute w-3 h-3 bg-zinc-800 rounded-full -left-[6.5px] top-1 border-2 border-zinc-950" />
+                      <p className={`text-xs font-bold ${corClass} mb-0.5`}>{displayTime}</p>
+                      <p className="text-sm font-bold text-zinc-200">{t.titulo}</p>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4 text-zinc-500">
+                  <CheckCircle2 className="w-8 h-8 mb-2 opacity-50" />
+                  <p className="text-sm">Nenhuma demanda agendada.</p>
+                </div>
+              )}
             </div>
           </section>
 
@@ -194,27 +210,33 @@ export default function EmployeeDashboard() {
               <h2 className="text-lg font-bold text-white">Timeline Recente</h2>
             </div>
             <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl p-4 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-400 mt-0.5"><MessageSquare className="w-3.5 h-3.5" /></div>
-                <div>
-                  <p className="text-xs font-bold text-zinc-300">João comentou na demanda</p>
-                  <p className="text-[10px] text-zinc-500">09:15</p>
+              {recentTimeline.length > 0 ? (
+                recentTimeline.map((notif) => {
+                  let Icon = MessageSquare;
+                  let colorClass = "bg-blue-500/10 text-blue-400";
+                  if (notif.tipo === 'sucesso') { Icon = CheckCircle2; colorClass = "bg-emerald-500/10 text-emerald-400"; }
+                  if (notif.tipo === 'alerta') { Icon = AlertCircle; colorClass = "bg-amber-500/10 text-amber-400"; }
+                  if (notif.tipo === 'erro') { Icon = AlertCircle; colorClass = "bg-rose-500/10 text-rose-400"; }
+                  if (notif.mensagem.toLowerCase().includes('tarefa') || notif.mensagem.toLowerCase().includes('demanda')) { Icon = FileText; colorClass = "bg-zinc-800 text-zinc-400"; }
+
+                  return (
+                    <div key={notif.id} className="flex items-start gap-3">
+                      <div className={`p-1.5 rounded-lg mt-0.5 ${colorClass}`}>
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-zinc-300">{notif.mensagem}</p>
+                        <p className="text-[10px] text-zinc-500">{notif.data_criacao ? new Date(notif.data_criacao).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : 'Agora'}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4 text-zinc-500">
+                  <Clock className="w-8 h-8 mb-2 opacity-50" />
+                  <p className="text-sm">Nenhuma atividade recente.</p>
                 </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-400 mt-0.5"><CheckCircle2 className="w-3.5 h-3.5" /></div>
-                <div>
-                  <p className="text-xs font-bold text-zinc-300">Cliente aprovou Landing Page</p>
-                  <p className="text-[10px] text-zinc-500">09:40</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-zinc-800 rounded-lg text-zinc-400 mt-0.5"><FileText className="w-3.5 h-3.5" /></div>
-                <div>
-                  <p className="text-xs font-bold text-zinc-300">Nova tarefa criada</p>
-                  <p className="text-[10px] text-zinc-500">10:12</p>
-                </div>
-              </div>
+              )}
             </div>
           </section>
         </div>

@@ -219,7 +219,7 @@ export default function ResultadosPage() {
                   {/* Tabela Comparativa */}
                   <div className="space-y-4">
                     <h4 className="text-sm font-bold text-zinc-300 uppercase tracking-widest border-b border-zinc-800 pb-2">Evolução em Números</h4>
-                    <div className="overflow-x-auto">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-zinc-500 text-left">

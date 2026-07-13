@@ -36,7 +36,7 @@ export function WidgetTarefasEquipe() {
 
   return (
     <WidgetContainer id="tarefas_equipe" title="Tarefas da Equipe" icon={<ListTodo className="w-5 h-5 text-indigo-500" />} fullWidth>
-      <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {users.map(u => {
           const userTasks = tarefas.filter(t => t.responsavel_id === u.id);
           if (userTasks.length === 0) return null; // Não exibe usuários sem tarefas neste painel
