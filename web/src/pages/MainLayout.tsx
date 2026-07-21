@@ -5,6 +5,10 @@ import {
   LogOut, Bell, Plus, Search, MoreVertical, CheckCircle2, Clock, AlertCircle, PlayCircle, MessageSquare, X, DollarSign, Phone, Mail, FileText, Sparkles, Menu, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { ModalNovaTarefa, ModalNovoCliente, ModalNovaMetrica, ModalNovoLead } from '../components/Modals';
 import { GlobalSearch } from '../components/GlobalSearch';
 
@@ -35,8 +39,35 @@ import CalendarioPage from './Calendario';
 export type Page = 'dashboard' | 'comercial' | 'kanban' | 'reunioes' | 'calendario' | 'clientes' | 'resultados' | 'equipe' | 'copilot' | 'conteudo' | 'planejador' | 'cliente-perfil' | 'suporte' | 'employee_dashboard' | 'video_maker_dashboard' | 'secretary_dashboard';
 
 // ===== SIDEBAR =====
+function SortableNavItem({ item, isActive, setPage }: { item: any; isActive: boolean; setPage: (p: Page) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.8 : 1,
+  };
+  const Icon = item.icon;
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none w-full">
+      <button 
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'}`} 
+        onClick={() => setPage(item.id as Page)}
+      >
+        <Icon className={`w-4 h-4 ${isActive ? 'opacity-100' : 'opacity-70'}`} />
+        {item.label}
+        {item.badge && (
+          <Badge variant={item.badgeColor === 'destructive' ? 'destructive' : 'default'} className="ml-auto text-[10px] px-1.5 py-0 rounded-full h-5 pointer-events-none">
+            {item.badge}
+          </Badge>
+        )}
+      </button>
+    </div>
+  );
+}
+
 function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page; setPage: (p: Page) => void; isMobileOpen: boolean; setIsMobileOpen: (v: boolean) => void }) {
-  const { currentUser, logout, tarefas, correcoes } = useApp();
+  const { currentUser, logout, tarefas, correcoes, updatePreferencias } = useApp();
   const atrasadas = tarefas.filter(t => t.status === 'Atrasado').length;
   const pendentes = correcoes.filter(c => c.status === 'Pendente').length;
 
@@ -66,7 +97,43 @@ function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page;
     { id: 'suporte', icon: MessageSquare, label: 'Suporte Técnico', show: true },
   ];
 
-  const navItems = allNavItems.filter(item => item.show);
+  const [navItems, setNavItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    let items = allNavItems.filter(item => item.show);
+    const savedOrder = currentUser?.preferencias?.sidebarLayout;
+    if (savedOrder && Array.isArray(savedOrder)) {
+      items.sort((a, b) => {
+        const idxA = savedOrder.indexOf(a.id);
+        const idxB = savedOrder.indexOf(b.id);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+      });
+    }
+    setNavItems(items);
+  }, [currentUser?.preferencias?.sidebarLayout, currentUser?.funcao, atrasadas, pendentes]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setNavItems((items) => {
+        const oldIndex = items.findIndex(i => i.id === active.id);
+        const newIndex = items.findIndex(i => i.id === over.id);
+        const newArray = arrayMove(items, oldIndex, newIndex);
+        if (currentUser && updatePreferencias) {
+          updatePreferencias({ sidebarLayout: newArray.map(i => i.id) });
+        }
+        return newArray;
+      });
+    }
+  };
 
   return (
     <>
@@ -90,25 +157,13 @@ function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page;
       <div className="p-4 flex-1 overflow-y-auto">
         <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2 px-2">Workspace</p>
         <nav className="flex flex-col gap-1">
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const isActive = page === item.id;
-            return (
-              <button 
-                key={item.id} 
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'}`} 
-                onClick={() => setPage(item.id as Page)}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'opacity-100' : 'opacity-70'}`} />
-                {item.label}
-                {item.badge && (
-                  <Badge variant={item.badgeColor === 'destructive' ? 'destructive' : 'default'} className="ml-auto text-[10px] px-1.5 py-0 rounded-full h-5">
-                    {item.badge}
-                  </Badge>
-                )}
-              </button>
-            )
-          })}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={navItems.map(i => i.id)} strategy={verticalListSortingStrategy}>
+              {navItems.map(item => (
+                <SortableNavItem key={item.id} item={item} isActive={page === item.id} setPage={setPage} />
+              ))}
+            </SortableContext>
+          </DndContext>
         </nav>
       </div>
 

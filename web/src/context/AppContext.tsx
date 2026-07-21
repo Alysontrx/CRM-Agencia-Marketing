@@ -40,6 +40,7 @@ interface AppContextType {
   marcarNotificacaoLida: (id: number) => Promise<void>;
   addUser: (user: Omit<User, 'id'>) => Promise<void>;
   updateUser: (id: number, changes: Partial<User>) => Promise<void>;
+  updatePreferencias: (newPrefs: any) => Promise<void>;
   deleteUser: (id: number) => Promise<void>;
   setTarefas: React.Dispatch<React.SetStateAction<TarefaData[]>>;
   setClientes: React.Dispatch<React.SetStateAction<ClienteData[]>>;
@@ -388,6 +389,23 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     await supabase.from('usuarios').update(dbChanges).eq('id', id);
   };
 
+  const updatePreferencias = async (newPrefs: any) => {
+    if (!currentUser) return;
+    
+    // Merge the existing preferences with the new ones
+    const updatedPrefs = { ...(currentUser.preferencias || {}), ...newPrefs };
+    
+    // Update local state for immediate feedback
+    setCurrentUser({ ...currentUser, preferencias: updatedPrefs });
+    setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, preferencias: updatedPrefs } : u));
+    
+    // Update database
+    const { error } = await supabase.from('usuarios').update({ preferencias: updatedPrefs }).eq('id', currentUser.id);
+    if (error) {
+      console.error('Erro ao salvar preferências:', error);
+    }
+  };
+
   const addNotificacao = async (mensagem: string, tipo: 'info' | 'sucesso' | 'alerta' | 'erro') => {
     if (!currentUser) return;
     const nova = { mensagem, tipo, lida: false };
@@ -439,7 +457,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       currentUser, users, clientes, leads, tarefas, correcoes, metricas, notificacoes, projetos, conteudos, financeiro, arquivos, historico, loadingData,
       login, logout, updateTarefaStatus, updateTarefa, updateLead, updateCliente, updateMetrica, 
       deleteTarefa, deleteLead, deleteCliente, deleteMetrica,
-      addComentario, addTarefa, addCliente, addLead, addMetrica, addNotificacao, marcarNotificacaoLida, addUser, updateUser, deleteUser, setTarefas, setClientes, setLeads, setUsers,
+      addComentario, addTarefa, addCliente, addLead, addMetrica, addNotificacao, marcarNotificacaoLida, addUser, updateUser, updatePreferencias, deleteUser, setTarefas, setClientes, setLeads, setUsers,
       addProjeto, addConteudo, addFinanceiro, addArquivo, addHistorico
     }}>
       {children}

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
+import { supabase } from '../lib/supabase';
 import { generateContentIdeas, generateScript } from '../lib/ai';
-import { Sparkles, Plus, Loader2, Video, FileText, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Plus, Loader2, Video, FileText, CheckCircle2, CalendarDays } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -19,6 +20,11 @@ export default function ConteudoPage() {
   const [script, setScript] = useState<string | null>(null);
 
   const [sentToProd, setSentToProd] = useState(false);
+  
+  // States para integração com o Planejador
+  const [sentToPlanejador, setSentToPlanejador] = useState(false);
+  const [sendingToPlanejador, setSendingToPlanejador] = useState(false);
+  const [planejadorDate, setPlanejadorDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const handleGerarIdeias = async () => {
     if (!selectedClienteId) return;
@@ -30,6 +36,7 @@ export default function ConteudoPage() {
     setSelectedIdeia(null);
     setScript(null);
     setSentToProd(false);
+    setSentToPlanejador(false);
     
     // Usa o nicho que o usuário digitou/confirmou no input
     const nichoFinal = customNicho.trim() || cliente.nicho || cliente.segmento || cliente.servico || 'Geral';
@@ -48,6 +55,7 @@ export default function ConteudoPage() {
     setIsGeneratingScript(true);
     setScript(null);
     setSentToProd(false);
+    setSentToPlanejador(false);
 
     const nichoFinal = customNicho.trim() || cliente.nicho || cliente.segmento || cliente.servico || 'Geral';
     const novoRoteiro = await generateScript(nichoFinal, ideia);
@@ -76,6 +84,34 @@ export default function ConteudoPage() {
     }, 2000);
   };
 
+  const handleSendToPlanejador = async () => {
+    if (!selectedClienteId || !selectedIdeia || !script || !planejadorDate) return;
+    
+    setSendingToPlanejador(true);
+
+    const postData = {
+      cliente_id: selectedClienteId,
+      date: planejadorDate,
+      image: '', // Fica vazio para mostrar o "Aguardando Arte"
+      caption: script
+    };
+
+    const { error } = await supabase.from('posts_planejador').insert([postData]);
+
+    setSendingToPlanejador(false);
+    
+    if (!error) {
+      setSentToPlanejador(true);
+      setTimeout(() => {
+        setSelectedIdeia(null);
+        setScript(null);
+        setSentToPlanejador(false);
+      }, 3000);
+    } else {
+      alert("Erro ao salvar no planejador. Verifique as tabelas do banco.");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto w-full space-y-6">
       <div className="flex items-center justify-between">
@@ -84,7 +120,7 @@ export default function ConteudoPage() {
             <Sparkles className="w-6 h-6 text-blue-500" />
             Estúdio de Conteúdo IA
           </h2>
-          <p className="text-sm text-zinc-400 mt-1">Gere ideias, roteiros e legendas em segundos e envie para o Kanban.</p>
+          <p className="text-sm text-zinc-400 mt-1">Gere ideias, roteiros e legendas em segundos e envie para o Kanban ou Planejador.</p>
         </div>
       </div>
 
@@ -207,18 +243,44 @@ export default function ConteudoPage() {
               </CardContent>
 
               {script && (
-                <div className="p-4 border-t border-zinc-800 bg-zinc-900 flex justify-end">
+                <div className="p-4 border-t border-zinc-800 bg-zinc-950 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  
+                  {/* Bloco do Planejador */}
+                  <div className="flex items-center gap-3 w-full sm:w-auto bg-zinc-900 p-2 rounded-xl border border-zinc-800">
+                    <input 
+                      type="date" 
+                      value={planejadorDate}
+                      onChange={(e) => setPlanejadorDate(e.target.value)}
+                      className="h-10 bg-zinc-950 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:border-purple-500 color-scheme-dark"
+                    />
+                    <Button 
+                      onClick={handleSendToPlanejador} 
+                      disabled={sendingToPlanejador || sentToPlanejador}
+                      className={`h-10 px-4 font-semibold ${sentToPlanejador ? 'bg-emerald-600 hover:bg-emerald-600' : 'bg-purple-600 hover:bg-purple-700'} text-white shadow-lg transition-all`}
+                    >
+                      {sendingToPlanejador ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : sentToPlanejador ? (
+                        <><CheckCircle2 className="w-4 h-4 mr-2" /> Agendado!</>
+                      ) : (
+                        <><CalendarDays className="w-4 h-4 mr-2" /> Agendar no Planejador</>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* Bloco do Kanban */}
                   <Button 
                     onClick={handleSendToProduction} 
                     disabled={sentToProd}
-                    className={`h-10 px-6 font-semibold ${sentToProd ? 'bg-emerald-600 hover:bg-emerald-600' : 'bg-blue-600 hover:bg-blue-700'} text-white shadow-lg transition-all`}
+                    className={`h-10 px-6 font-semibold w-full sm:w-auto ${sentToProd ? 'bg-emerald-600 hover:bg-emerald-600' : 'bg-blue-600 hover:bg-blue-700'} text-white shadow-lg transition-all`}
                   >
                     {sentToProd ? (
-                      <><CheckCircle2 className="w-4 h-4 mr-2" /> Tarefa Criada no Kanban!</>
+                      <><CheckCircle2 className="w-4 h-4 mr-2" /> Criado no Kanban!</>
                     ) : (
-                      <><Plus className="w-4 h-4 mr-2" /> Enviar para Produção (Kanban)</>
+                      <><Plus className="w-4 h-4 mr-2" /> Enviar para Kanban</>
                     )}
                   </Button>
+
                 </div>
               )}
             </Card>

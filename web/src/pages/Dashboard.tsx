@@ -64,7 +64,7 @@ const WIDGETS_LABELS: Record<WidgetId, string> = {
 };
 
 export default function DashboardPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
-  const { currentUser } = useApp();
+  const { currentUser, updatePreferencias } = useApp();
   const [activeWidgets, setActiveWidgets] = useState<WidgetId[]>([]);
   const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
 
@@ -85,11 +85,22 @@ export default function DashboardPage({ onNavigate }: { onNavigate?: (page: stri
   useEffect(() => {
     if (!currentUser) return;
     
-    // Check if there is a saved layout
-    const savedLayout = localStorage.getItem(`@atlas_layout_${currentUser.id}`);
-    if (savedLayout) {
+    // Check if there is a saved layout in preferences
+    const savedLayout = currentUser.preferencias?.dashboardLayout;
+    if (savedLayout && Array.isArray(savedLayout) && savedLayout.length > 0) {
+      setActiveWidgets(savedLayout);
+      return;
+    }
+
+    // Fallback: check old localStorage for backward compatibility
+    const oldSavedLayout = localStorage.getItem(`@atlas_layout_${currentUser.id}`);
+    if (oldSavedLayout) {
       try {
-        setActiveWidgets(JSON.parse(savedLayout));
+        const parsed = JSON.parse(oldSavedLayout);
+        setActiveWidgets(parsed);
+        // Save it to new preferences
+        updatePreferencias({ dashboardLayout: parsed });
+        localStorage.removeItem(`@atlas_layout_${currentUser.id}`);
         return;
       } catch (e) {
         console.error("Error parsing saved layout", e);
@@ -127,7 +138,7 @@ export default function DashboardPage({ onNavigate }: { onNavigate?: (page: stri
         const oldIndex = items.indexOf(active.id as WidgetId);
         const newIndex = items.indexOf(over.id as WidgetId);
         const newArray = arrayMove(items, oldIndex, newIndex);
-        if (currentUser) localStorage.setItem(`@atlas_layout_${currentUser.id}`, JSON.stringify(newArray));
+        if (currentUser) updatePreferencias({ dashboardLayout: newArray });
         return newArray;
       });
     }
@@ -142,7 +153,7 @@ export default function DashboardPage({ onNavigate }: { onNavigate?: (page: stri
       } else {
         newArray = [...prev, widgetId];
       }
-      if (currentUser) localStorage.setItem(`@atlas_layout_${currentUser.id}`, JSON.stringify(newArray));
+      if (currentUser) updatePreferencias({ dashboardLayout: newArray });
       return newArray;
     });
   };

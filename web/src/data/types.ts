@@ -18,6 +18,7 @@ export interface User {
   funcao: UserRole;
   avatar?: string;
   avatar_url?: string;
+  preferencias?: any;
 }
 
 export interface ClienteData {

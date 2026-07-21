@@ -1,70 +1,61 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Calendar, Plus, Image as ImageIcon, Trash2, CalendarDays, Loader2, ArrowRight } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { Calendar, Plus, Image as ImageIcon, Trash2, CalendarDays, Loader2, Edit3 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface PostPlanner {
-  id: string;
+  id: number;
   cliente_id: number;
   date: string; // YYYY-MM-DD
-  image: string; // base64
+  image: string; // base64 or URL
   caption: string;
 }
 
 export default function PlanejadorPage() {
   const { clientes } = useApp();
   
-  // Mês e Cliente selecionados
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
   
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
 
-  // Todos os posts salvos
-  const [posts, setPosts] = useState<PostPlanner[]>(() => {
-    const saved = localStorage.getItem('sense-planejador-posts');
-    if (saved && saved !== '[]') {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.length > 0) return parsed;
-      } catch (e) {
-        console.error('Erro ao ler posts', e);
-      }
-    }
-    
-    // Dados fictícios para caso esteja vazio
-    const hoje = new Date();
-    const proximaSemana = new Date(hoje); proximaSemana.setDate(hoje.getDate() + 3);
-    
-    return [
-      {
-        id: 'mock1',
-        cliente_id: clientes[0]?.id || 1,
-        date: hoje.toISOString().split('T')[0],
-        image: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
-        caption: 'O inverno chegou! ❄️🧥 E com ele, as melhores tendências de moda para você arrasar.\n\n#Inverno #Moda2026'
-      },
-      {
-        id: 'mock2',
-        cliente_id: clientes[0]?.id || 1,
-        date: proximaSemana.toISOString().split('T')[0],
-        image: 'https://images.unsplash.com/photo-1515347619152-198158586c0e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
-        caption: 'Acessórios que transformam qualquer look básico. Qual o seu favorito? 👇✨\n\n#Acessorios #Estilo'
-      }
-    ];
-  });
+  const [posts, setPosts] = useState<PostPlanner[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Modal Novo Post
+  // Modal Novo/Editar Post
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<number | null>(null);
+  
   const [newPostDate, setNewPostDate] = useState('');
   const [newPostCaption, setNewPostCaption] = useState('');
   const [newPostImage, setNewPostImage] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    localStorage.setItem('sense-planejador-posts', JSON.stringify(posts));
-  }, [posts]);
+    if (selectedClienteId) {
+      fetchPosts();
+    } else {
+      setPosts([]);
+    }
+  }, [selectedClienteId]);
+
+  const fetchPosts = async () => {
+    if (!selectedClienteId) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('posts_planejador')
+      .select('*')
+      .eq('cliente_id', selectedClienteId);
+      
+    if (!error && data) {
+      setPosts(data as any);
+    }
+    setLoading(false);
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,37 +69,62 @@ export default function PlanejadorPage() {
     if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
-  const handleCreatePost = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedClienteId || !newPostDate || !newPostCaption || !newPostImage) {
-      alert("Preencha todos os campos e anexe uma imagem!");
-      return;
-    }
-
-    const newPost: PostPlanner = {
-      id: Date.now().toString(),
-      cliente_id: selectedClienteId,
-      date: newPostDate,
-      image: newPostImage,
-      caption: newPostCaption
-    };
-
-    setPosts([...posts, newPost]);
-    setIsModalOpen(false);
+  const openNewModal = () => {
+    setEditingPostId(null);
     setNewPostDate('');
     setNewPostCaption('');
     setNewPostImage(null);
+    setIsModalOpen(true);
   };
 
-  const handleDeletePost = (id: string) => {
+  const openEditModal = (post: PostPlanner) => {
+    setEditingPostId(post.id);
+    setNewPostDate(post.date);
+    setNewPostCaption(post.caption);
+    setNewPostImage(post.image);
+    setIsModalOpen(true);
+  };
+
+  const handleSavePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClienteId || !newPostDate || !newPostCaption) {
+      alert("Preencha a data e a legenda!");
+      return;
+    }
+
+    setSaving(true);
+    const postData = {
+      cliente_id: selectedClienteId,
+      date: newPostDate,
+      image: newPostImage || '',
+      caption: newPostCaption
+    };
+
+    if (editingPostId) {
+      // Update
+      const { error } = await supabase.from('posts_planejador').update(postData).eq('id', editingPostId);
+      if (!error) fetchPosts();
+    } else {
+      // Insert
+      const { error } = await supabase.from('posts_planejador').insert([postData]);
+      if (!error) fetchPosts();
+    }
+
+    setSaving(false);
+    setIsModalOpen(false);
+  };
+
+  const handleDeletePost = async (id: number) => {
     if (confirm("Tem certeza que deseja apagar este post?")) {
-      setPosts(posts.filter(p => p.id !== id));
+      const { error } = await supabase.from('posts_planejador').delete().eq('id', id);
+      if (!error) {
+        setPosts(posts.filter(p => p.id !== id));
+      }
     }
   };
 
-  // Filtrar os posts pelo cliente e mês/ano selecionados
+  // Filtrar os posts pelo cliente e mês/ano selecionados na tela
   const filteredPosts = posts.filter(p => {
-    if (p.cliente_id !== selectedClienteId) return false;
     const pDate = new Date(p.date + 'T12:00:00'); // Evitar problema de fuso
     return pDate.getMonth() === selectedMonth && pDate.getFullYear() === selectedYear;
   }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -133,7 +149,7 @@ export default function PlanejadorPage() {
         
         {selectedClienteId && (
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={openNewModal}
             className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg transition-colors flex items-center gap-2 shrink-0"
           >
             <Plus className="w-4 h-4" />
@@ -193,11 +209,16 @@ export default function PlanejadorPage() {
           <Calendar className="w-12 h-12 mb-3 text-zinc-700" />
           <p>Selecione um cliente para ver ou agendar os posts do mês.</p>
         </div>
+      ) : loading ? (
+        <div className="h-64 flex flex-col items-center justify-center text-zinc-500">
+          <Loader2 className="w-8 h-8 animate-spin mb-3 text-purple-500" />
+          <p>Carregando posts...</p>
+        </div>
       ) : filteredPosts.length === 0 ? (
         <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 rounded-2xl bg-zinc-900/30 text-zinc-500">
           <ImageIcon className="w-12 h-12 mb-3 text-zinc-700" />
           <p>Nenhum post agendado para {meses[selectedMonth]} {selectedYear}.</p>
-          <button onClick={() => setIsModalOpen(true)} className="mt-4 text-purple-400 hover:text-purple-300 text-sm font-medium">
+          <button onClick={openNewModal} className="mt-4 text-purple-400 hover:text-purple-300 text-sm font-medium">
             + Começar a preencher o mês
           </button>
         </div>
@@ -218,17 +239,36 @@ export default function PlanejadorPage() {
                     </div>
                     <span className="text-zinc-400 text-xs font-medium uppercase">{diaDaSemana}</span>
                   </div>
-                  <button 
-                    onClick={() => handleDeletePost(post.id)}
-                    className="text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => openEditModal(post)}
+                      className="text-zinc-600 hover:text-purple-400"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => handleDeletePost(post.id)}
+                      className="text-zinc-600 hover:text-red-400"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 
                 {/* Imagem (Arte do Post) */}
-                <div className="h-48 w-full bg-black relative overflow-hidden flex items-center justify-center border-b border-zinc-800">
-                  <img src={post.image} alt="Arte" className="max-w-full max-h-full object-contain" />
+                <div 
+                  className="h-48 w-full bg-black relative overflow-hidden flex items-center justify-center border-b border-zinc-800 cursor-pointer group-hover:opacity-90 transition-opacity"
+                  onClick={() => openEditModal(post)}
+                >
+                  {post.image ? (
+                    <img src={post.image} alt="Arte" className="max-w-full max-h-full object-contain" />
+                  ) : (
+                    <div className="flex flex-col items-center text-zinc-600">
+                      <ImageIcon className="w-10 h-10 mb-2" />
+                      <span className="text-xs font-medium">Aguardando Arte</span>
+                      <span className="text-[10px]">(Clique para adicionar)</span>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Legenda */}
@@ -244,16 +284,16 @@ export default function PlanejadorPage() {
         </div>
       )}
 
-      {/* MODAL DE NOVO POST */}
+      {/* MODAL DE NOVO/EDITAR POST */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
             <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
-              <h3 className="text-lg font-bold text-zinc-100">Agendar Novo Post</h3>
+              <h3 className="text-lg font-bold text-zinc-100">{editingPostId ? 'Editar Post' : 'Agendar Novo Post'}</h3>
               <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-white">&times;</button>
             </div>
             
-            <form onSubmit={handleCreatePost} className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
+            <form onSubmit={handleSavePost} className="p-6 overflow-y-auto custom-scrollbar flex flex-col gap-6">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -279,7 +319,7 @@ export default function PlanejadorPage() {
                       ) : (
                         <>
                           <ImageIcon className="w-8 h-8 text-zinc-500 mb-2" />
-                          <span className="text-xs text-zinc-400 font-medium">Clique para upar a imagem (.jpg, .png)</span>
+                          <span className="text-xs text-zinc-400 font-medium text-center px-4">Clique para upar a imagem<br/>(.jpg, .png)</span>
                         </>
                       )}
                     </div>
@@ -303,8 +343,9 @@ export default function PlanejadorPage() {
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white">
                   Cancelar
                 </button>
-                <button type="submit" className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium shadow-lg transition-colors">
-                  Salvar Post no Planejador
+                <button disabled={saving} type="submit" className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium shadow-lg transition-colors flex items-center gap-2 disabled:opacity-50">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  {saving ? 'Salvando...' : 'Salvar Post no Planejador'}
                 </button>
               </div>
             </form>
