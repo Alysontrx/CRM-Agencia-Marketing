@@ -153,7 +153,7 @@ export default function LoginPage() {
       </div>
 
       {/* Lado Direito - Formulário */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 lg:p-12 relative z-10">
         
         {/* Glow sutil no mobile */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[300px] bg-blue-500/10 rounded-full blur-[100px] lg:hidden z-0" />
