@@ -5,7 +5,7 @@ import {
   LogOut, Bell, Plus, Search, MoreVertical, CheckCircle2, Clock, AlertCircle, PlayCircle, MessageSquare, X, DollarSign, Phone, Mail, FileText, Sparkles, Menu, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -49,7 +49,7 @@ function SortableNavItem({ item, isActive, setPage }: { item: any; isActive: boo
   };
   const Icon = item.icon;
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none w-full">
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="w-full">
       <button 
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200'}`} 
         onClick={() => setPage(item.id as Page)}
@@ -116,7 +116,8 @@ function Sidebar({ page, setPage, isMobileOpen, setIsMobileOpen }: { page: Page;
   }, [currentUser?.preferencias?.sidebarLayout, currentUser?.funcao, atrasadas, pendentes]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
