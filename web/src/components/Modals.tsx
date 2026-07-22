@@ -127,7 +127,7 @@ export function ModalNovaTarefa({ isOpen, onClose, editData, initialDate }: { is
             {users.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Prioridade</label>
             <select className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={form.prioridade} onChange={e => setForm({...form, prioridade: e.target.value})}>
@@ -261,7 +261,7 @@ export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolea
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={editData ? "Editar Cliente" : "Novo Cliente"}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Nome da Empresa</label>
             <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.nome} onChange={e => setForm({...form, nome: e.target.value})} />
@@ -271,13 +271,13 @@ export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolea
             <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={form.nicho} onChange={e => setForm({...form, nicho: e.target.value})} placeholder="Ex: Tecnologia, Saúde" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">WhatsApp (Cobrança)</label>
             <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={form.whatsapp} onChange={e => setForm({...form, whatsapp: e.target.value})} placeholder="Ex: 11999999999" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Serviço Contratado</label>
             <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.servico} onChange={e => setForm({...form, servico: e.target.value})} placeholder="Ex: Gestão Redes Sociais" />
@@ -287,7 +287,7 @@ export function ModalNovoCliente({ isOpen, onClose, editData }: { isOpen: boolea
             <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={form.instagram_url} onChange={e => setForm({...form, instagram_url: e.target.value})} placeholder="https://instagram.com/perfil" />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-zinc-300 flex items-center gap-2">MRR (R$)</label>
               <input type="number" step="0.01" className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50" value={form.mrr} onChange={e => setForm({...form, mrr: e.target.value})} placeholder="0.00" />
@@ -380,7 +380,7 @@ export function ModalNovaMetrica({ isOpen, onClose, editData }: { isOpen: boolea
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={editData ? "Editar Métrica" : "Registrar Métrica (Antes x Depois)"}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Cliente</label>
             <select className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.cliente_id} onChange={e => setForm({...form, cliente_id: e.target.value})}>
@@ -396,7 +396,7 @@ export function ModalNovaMetrica({ isOpen, onClose, editData }: { isOpen: boolea
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Seguidores</label>
             <input type="number" className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.seguidores} onChange={e => setForm({...form, seguidores: e.target.value})} placeholder="Ex: 1500" />
@@ -478,7 +478,7 @@ export function ModalNovoLead({ isOpen, onClose, editData }: { isOpen: boolean; 
           <label className="text-sm font-medium text-zinc-300">Nome da Empresa</label>
           <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.empresa} onChange={e => setForm({...form, empresa: e.target.value})} placeholder="Ex: Clínica Sorriso" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Nome do Contato</label>
             <input className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.contato} onChange={e => setForm({...form, contato: e.target.value})} placeholder="Ex: Dr. Silva" />
@@ -492,7 +492,7 @@ export function ModalNovoLead({ isOpen, onClose, editData }: { isOpen: boolean; 
           <label className="text-sm font-medium text-zinc-300">E-mail</label>
           <input type="email" className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="contato@empresa.com" />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Valor Estimado (MRR/Fee)</label>
             <input type="number" step="0.01" className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500" required value={form.valor_estimado} onChange={e => setForm({...form, valor_estimado: e.target.value})} placeholder="1500.00" />
@@ -677,7 +677,7 @@ export function ModalNovaReuniao({ isOpen, onClose, initialDate }: { isOpen: boo
             {clientes.map(c => <option key={c.id} value={c.id}>{c.empresa || c.nome}</option>)}
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Data</label>
             <input required type="date" value={form.data} onChange={e => setForm({...form, data: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100" />
@@ -734,7 +734,7 @@ export function ModalNovoProjeto({ isOpen, onClose }: { isOpen: boolean; onClose
             {clientes.map(c => <option key={c.id} value={c.id}>{c.empresa || c.nome}</option>)}
           </select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-zinc-300">Tipo</label>
             <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})} className="w-full h-10 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 text-sm text-zinc-100">
