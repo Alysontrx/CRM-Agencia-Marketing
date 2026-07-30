@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import MainLayout from './pages/MainLayout';
 import ResetPassword from './pages/ResetPassword';
 import PlanejadorPage from './pages/Planejador';
+import PublicPlanejador from './pages/PublicPlanejador';
 import { Loader2 } from 'lucide-react';
 
 function AgencyRouter() {
@@ -30,6 +31,7 @@ function App() {
         <Routes>
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/planejador" element={<PlanejadorPage />} />
+          <Route path="/p/planejador/:token" element={<PublicPlanejador />} />
           <Route path="/*" element={
             <AppProvider>
               <AgencyRouter />
