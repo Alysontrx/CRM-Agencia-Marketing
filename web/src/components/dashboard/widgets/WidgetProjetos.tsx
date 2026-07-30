@@ -5,7 +5,7 @@ import { FolderKanban, Clock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 
-export function WidgetProjetos() {
+export function WidgetProjetos({ onAddProjeto }: { onAddProjeto?: () => void }) {
   const { projetos, clientes, users } = useApp();
 
   return (
@@ -71,7 +71,17 @@ export function WidgetProjetos() {
             })}
             {projetos.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-zinc-500">Nenhum projeto ativo.</td>
+                <td colSpan={5} className="py-8 text-center">
+                  <p className="text-zinc-500 mb-4">Nenhum projeto ativo.</p>
+                  {onAddProjeto && (
+                    <button 
+                      onClick={onAddProjeto}
+                      className="px-4 py-2 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300 rounded-lg text-sm font-medium transition-colors border border-indigo-500/20"
+                    >
+                      + Criar Novo Projeto
+                    </button>
+                  )}
+                </td>
               </tr>
             )}
           </tbody>

@@ -129,10 +129,25 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentUser(null);
   };
 
+  const addHistorico = async (hist: Omit<HistoricoData, 'id' | 'data_registro'>) => {
+    if (!currentUser) return;
+    const { data, error } = await supabase.from('historico_clientes').insert([hist]).select().single();
+    if (data && !error) setHistorico(prev => [data, ...prev]);
+  };
+
   const updateTarefaStatus = async (tarefaId: number, newStatus: string) => {
     const { error } = await supabase.from('tarefas').update({ status: newStatus }).eq('id', tarefaId);
     if (!error) {
       setTarefas(prev => prev.map(t => t.id === tarefaId ? { ...t, status: newStatus } : t));
+      const t = tarefas.find(x => x.id === tarefaId);
+      if (t) {
+        addHistorico({
+          agencia_id: 1,
+          cliente_id: t.cliente_id,
+          usuario: currentUser?.nome || 'Sistema',
+          descricao: `Atualizou tarefa "${t.titulo}" para ${newStatus}`
+        });
+      }
     }
   };
 
@@ -223,6 +238,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     if (data && !error) {
       setTarefas(prev => [data, ...prev]);
 
+      addHistorico({
+        agencia_id: 1,
+        cliente_id: data.cliente_id || 1,
+        usuario: currentUser.nome,
+        descricao: `Criou nova tarefa: ${data.titulo}`
+      });
+
       // Sincronizar com o Google Calendar caso tenha um prazo e o usuário esteja logado com o Google
       if (tarefa.prazo) {
         const token = localStorage.getItem('@crm_google_token');
@@ -299,6 +321,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     if (data && !error) {
       setClientes(prev => [data, ...prev]);
       
+      addHistorico({
+        agencia_id: 1,
+        cliente_id: data.id,
+        usuario: currentUser.nome,
+        descricao: `Novo cliente adicionado: ${data.nome}`
+      });
+
       // Sense AI: Gerar tarefas de onboarding automaticamente
       generateOnboardingTasks(data.nome, data.servico, data.responsavel_id).then(async (tasks) => {
         if (tasks.length > 0) {
@@ -323,6 +352,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     }
     if (data && !error) {
       setLeads(prev => [data, ...prev]);
+
+      addHistorico({
+        agencia_id: 1,
+        cliente_id: 1,
+        usuario: currentUser.nome,
+        descricao: `Novo lead capturado: ${data.empresa}`
+      });
 
       // Automação: Envio de E-mail de Boas-vindas
       if (data.email) {
@@ -420,7 +456,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const addProjeto = async (projeto: Omit<ProjetoData, 'id' | 'data_inicio'>) => {
     if (!currentUser) return;
     const { data, error } = await supabase.from('projetos').insert([projeto]).select().single();
-    if (data && !error) setProjetos(prev => [data, ...prev]);
+    if (data && !error) {
+      setProjetos(prev => [data, ...prev]);
+      addHistorico({
+        agencia_id: 1,
+        cliente_id: data.cliente_id || 1,
+        usuario: currentUser.nome,
+        descricao: `Novo projeto iniciado: ${data.nome}`
+      });
+    }
   };
 
   const addConteudo = async (conteudo: Omit<ConteudoData, 'id' | 'data_criacao'>) => {
@@ -441,11 +485,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     if (data && !error) setArquivos(prev => [data, ...prev]);
   };
 
-  const addHistorico = async (hist: Omit<HistoricoData, 'id' | 'data_registro'>) => {
-    if (!currentUser) return;
-    const { data, error } = await supabase.from('historico_clientes').insert([hist]).select().single();
-    if (data && !error) setHistorico(prev => [data, ...prev]);
-  };
+
 
   const marcarNotificacaoLida = async (id: number) => {
     setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: true } : n));

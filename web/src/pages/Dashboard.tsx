@@ -192,7 +192,10 @@ export default function DashboardPage({ onNavigate }: { onNavigate?: (page: stri
                   transition={{ delay: idx * 0.05 + 0.1 }}
                   className={isFullWidth ? 'md:col-span-2 lg:col-span-3' : 'col-span-1'}
                 >
-                  <WidgetComponent onNavigate={onNavigate} />
+                  <WidgetComponent 
+                    onNavigate={onNavigate} 
+                    onAddProjeto={widgetId === 'projetos' ? () => setModalNovoProjeto(true) : undefined}
+                  />
                 </motion.div>
               );
             })}
