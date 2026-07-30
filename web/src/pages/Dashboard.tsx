@@ -31,7 +31,7 @@ import {
   ModalNovoProjeto 
 } from '../components/Modals';
 
-type WidgetId = 'kpis' | 'prioridades' | 'agenda' | 'projetos' | 'equipe' | 'tarefas_equipe' | 'comercial' | 'financeiro' | 'conteudo' | 'ia' | 'timeline' | 'suporte';
+type WidgetId = 'kpis' | 'prioridades' | 'agenda' | 'projetos' | 'equipe' | 'tarefas_equipe' | 'comercial' | 'financeiro' | 'conteudo' | 'ia' | 'suporte';
 
 const WIDGETS_MAP: Record<WidgetId, React.FC<any>> = {
   'kpis': WidgetKPIs,
@@ -44,7 +44,6 @@ const WIDGETS_MAP: Record<WidgetId, React.FC<any>> = {
   'financeiro': WidgetFinanceiro,
   'conteudo': WidgetConteudo,
   'ia': WidgetIA,
-  'timeline': WidgetTimeline,
   'suporte': WidgetSuporte
 };
 
@@ -59,7 +58,6 @@ const WIDGETS_LABELS: Record<WidgetId, string> = {
   'financeiro': 'Resumo Financeiro',
   'conteudo': 'Hub de Conteúdo',
   'ia': 'Copilot IA',
-  'timeline': 'Atividade Recente',
   'suporte': 'Suporte Técnico'
 };
 
@@ -112,15 +110,15 @@ export default function DashboardPage({ onNavigate }: { onNavigate?: (page: stri
     let defaults: WidgetId[] = [];
 
     if (func === 'Admin' || func === 'Administrador' || func === 'Gerente') {
-      defaults = ['kpis', 'financeiro', 'comercial', 'projetos', 'equipe', 'tarefas_equipe', 'timeline', 'ia', 'suporte'];
+      defaults = ['kpis', 'financeiro', 'comercial', 'projetos', 'equipe', 'tarefas_equipe', 'ia', 'suporte'];
     } else if (func === 'Comercial') {
-      defaults = ['kpis', 'comercial', 'agenda', 'prioridades', 'timeline', 'suporte'];
+      defaults = ['kpis', 'comercial', 'agenda', 'prioridades', 'suporte'];
     } else if (func === 'Designer' || func === 'Editor de Vídeo') {
       defaults = ['kpis', 'prioridades', 'projetos', 'conteudo', 'ia', 'equipe', 'suporte'];
     } else if (func === 'Social Media') {
-      defaults = ['kpis', 'conteudo', 'agenda', 'ia', 'prioridades', 'timeline', 'suporte'];
+      defaults = ['kpis', 'conteudo', 'agenda', 'ia', 'prioridades', 'suporte'];
     } else if (func === 'Financeiro') {
-      defaults = ['financeiro', 'agenda', 'prioridades', 'timeline', 'suporte'];
+      defaults = ['financeiro', 'agenda', 'prioridades', 'suporte'];
     } else if (func === 'Secretária') {
       defaults = ['agenda', 'prioridades', 'equipe', 'projetos', 'suporte'];
     } else {
