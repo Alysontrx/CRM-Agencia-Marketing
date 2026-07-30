@@ -143,7 +143,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       if (t) {
         addHistorico({
           agencia_id: 1,
-          cliente_id: t.cliente_id,
+          cliente_id: t.cliente_id || 1,
           usuario: currentUser?.nome || 'Sistema',
           descricao: `Atualizou tarefa "${t.titulo}" para ${newStatus}`
         });
