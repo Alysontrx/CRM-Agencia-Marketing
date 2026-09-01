@@ -42,7 +42,7 @@ Exemplo:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'qwen/qwen3.6-27b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.2
       })
@@ -54,7 +54,11 @@ Exemplo:
     const content = data.choices?.[0]?.message?.content || '[]';
     
     // Limpar markdown code blocks se a IA os enviar mesmo pedindo para não enviar
-    const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim();
+    const cleanJson = content
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim();
     
     const parsed = JSON.parse(cleanJson);
     
@@ -95,7 +99,7 @@ Exemplo:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'qwen/qwen3.6-27b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7
       })
@@ -103,7 +107,11 @@ Exemplo:
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || '[]';
-    const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim();
+    const cleanJson = content
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim();
     return JSON.parse(cleanJson);
   } catch (e) {
     console.error('Erro gerar ideias:', e);
@@ -142,14 +150,15 @@ LEGENDA:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'qwen/qwen3.6-27b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7
       })
     });
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || 'Erro na geração.';
+    const rawContent = data.choices?.[0]?.message?.content || 'Erro na geração.';
+    return rawContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
   } catch (e) {
     console.error('Erro gerar roteiro:', e);
     return 'Houve um erro na comunicação com a IA. Tente novamente.';
@@ -193,7 +202,7 @@ Exemplo:
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'qwen/qwen3.6-27b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3
       })
@@ -203,7 +212,11 @@ Exemplo:
     if (!response.ok) throw new Error(data.error?.message || 'Erro na API');
 
     const content = data.choices?.[0]?.message?.content || '{}';
-    const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim();
+    const cleanJson = content
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/```json/gi, '')
+      .replace(/```/g, '')
+      .trim();
     return JSON.parse(cleanJson);
   } catch (err) {
     console.error('Falha ao qualificar lead:', err);
@@ -222,7 +235,8 @@ export async function askCopilot(
 
   let systemPrompt = `Você é o "Copilot Inteligente", um Copywriter Sênior e estrategista de marketing super avançado embutido no CRM. 
 Você ajuda a equipe da agência a gerar conteúdo profissional.
-Regra de Ouro: NUNCA inicie a resposta conversando com o usuário (ex: "Entendi!", "Vou criar..."). Entregue DIRETAMENTE o conteúdo solicitado, sem aspas e sem explicações.
+Regra de Ouro: Se o usuário pedir para gerar um conteúdo, NUNCA inicie a resposta conversando (ex: "Entendi!", "Vou criar..."). Entregue DIRETAMENTE o conteúdo solicitado, sem aspas e sem explicações.
+No entanto, se o usuário apenas enviar uma saudação (como "oi", "olá") ou fizer uma pergunta geral, seja educado, amigável e responda conversando normalmente.
 
 Abaixo estão os dados em tempo real da agência no momento atual. Use essas informações caso o usuário pergunte sobre clientes, leads ou tarefas.
 --- DADOS ATUAIS DA AGÊNCIA ---
@@ -240,12 +254,14 @@ Foque ESTRITAMENTE no nicho dele. NUNCA mencione que você é uma inteligência 
     const lastMsgIndex = finalHistory.length - 1;
     if (finalHistory[lastMsgIndex].role === 'user') {
       finalHistory[lastMsgIndex].content += `\n\n[DIRETRIZES OBRIGATÓRIAS DO DIRETOR DE CRIAÇÃO]: 
-Você DEVE escrever a legenda no formato perfeito para o INSTAGRAM.
-Siga EXATAMENTE esta estrutura:
+SE O USUÁRIO ESTIVER PEDINDO PARA CRIAR UMA LEGENDA/POST, você DEVE escrever no formato perfeito para o INSTAGRAM.
+Nesse caso (e apenas nesse caso), siga EXATAMENTE esta estrutura:
 1. **Gancho (Hook):** Uma frase curta e chamativa na primeira linha (com 1 emoji).
 2. **Corpo do Texto:** 2 a 3 parágrafos curtos explicando o benefício/solução. Use quebras de linha para ficar fácil de ler no celular.
 3. **Chamada para Ação (CTA):** Diga exatamente o que o usuário deve fazer (ex: clique no link, mande direct).
 4. **Hashtags:** 3 a 5 hashtags focadas.
+
+Se o usuário estiver apenas conversando ou tirando dúvidas (ex: "oi"), IGNORE essa estrutura de legenda e responda normalmente à mensagem dele.
 
 [IMPORTANTE - SOBRE O TOM DE VOZ]:
 Use o arquivo abaixo APENAS para absorver as gírias, o humor ou o nível de formalidade do cliente. 
@@ -283,7 +299,7 @@ ${fileContext}
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: imageBase64 ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.1-8b-instant',
+        model: imageBase64 ? 'qwen/qwen3.6-27b' : 'qwen/qwen3.6-27b',
         messages: messages,
         temperature: 0.7,
         max_tokens: 800
@@ -296,7 +312,8 @@ ${fileContext}
       throw new Error(`Erro Groq: ${data.error?.message || JSON.stringify(data)}`);
     }
 
-    return data.choices?.[0]?.message?.content || 'Desculpe, não consegui processar a resposta.';
+    const rawContent = data.choices?.[0]?.message?.content || 'Desculpe, não consegui processar a resposta.';
+    return rawContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
   } catch (err: any) {
     console.error('Falha no Copilot:', err);
     throw err;
@@ -329,7 +346,7 @@ Retorne APENAS uma frase útil sugerindo foco ou dando um alerta amigável. Não
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'qwen/qwen3.6-27b',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.5,
         max_tokens: 60
@@ -337,7 +354,8 @@ Retorne APENAS uma frase útil sugerindo foco ou dando um alerta amigável. Não
     });
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || 'Foque nas tarefas com prazo próximo hoje!';
+    const rawContent = data.choices?.[0]?.message?.content || 'Foque nas tarefas com prazo próximo hoje!';
+    return rawContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
   } catch (err) {
     return 'Dica: Organize suas prioridades do dia no Kanban para manter o fluxo.';
   }
