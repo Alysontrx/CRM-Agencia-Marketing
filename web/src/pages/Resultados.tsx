@@ -129,9 +129,9 @@ export default function ResultadosPage() {
     const opt = {
       margin:       0.5,
       filename:     `Relatorio_Evolucao_${clienteNome.replace(/\s+/g, '_')}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
+      image:        { type: 'jpeg' as const, quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#09090b' },
-      jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' as const }
     };
     
     html2pdf().set(opt).from(element).save();
