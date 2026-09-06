@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { supabase } from '../lib/supabase';
-import { Calendar, Plus, Image as ImageIcon, Trash2, CalendarDays, Loader2, Edit3, Link2, CheckCircle2 } from 'lucide-react';
+import { generateImage } from '../lib/ai';
+import { Calendar, Plus, Image as ImageIcon, Trash2, CalendarDays, Loader2, Edit3, Link2, CheckCircle2, Sparkles } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface PostPlanner {
@@ -32,6 +33,7 @@ export default function PlanejadorPage() {
   const [newPostCaption, setNewPostCaption] = useState('');
   const [newPostImage, setNewPostImage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
   
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -123,6 +125,22 @@ export default function PlanejadorPage() {
 
     setSaving(false);
     setIsModalOpen(false);
+  };
+
+  const handleGenerateImage = async () => {
+    if (!newPostCaption) {
+      alert("Escreva uma ideia ou a legenda no campo ao lado primeiro para a IA saber o que desenhar.");
+      return;
+    }
+    setGeneratingImage(true);
+    try {
+      const imageUrl = await generateImage(`Crie uma imagem limpa, moderna e profissional sem nenhum texto escrito nela. Tema: ${newPostCaption.substring(0, 500)}`);
+      setNewPostImage(imageUrl);
+    } catch (error: any) {
+      alert(error.message || "Erro ao gerar imagem. Verifique sua chave de API do OpenAI.");
+    } finally {
+      setGeneratingImage(false);
+    }
   };
 
   const handleDeletePost = async (id: number) => {
@@ -344,6 +362,16 @@ export default function PlanejadorPage() {
                       )}
                     </div>
                     <input type="file" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+                    
+                    <button
+                      type="button"
+                      onClick={handleGenerateImage}
+                      disabled={generatingImage}
+                      className="w-full mt-2 py-2 px-3 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 border border-indigo-500/30 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                    >
+                      {generatingImage ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      {generatingImage ? 'Gerando Arte...' : 'Gerar Arte com IA (DALL-E)'}
+                    </button>
                   </div>
                 </div>
 

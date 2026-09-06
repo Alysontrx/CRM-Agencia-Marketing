@@ -1,7 +1,7 @@
 import type { TarefaData } from '../data/types';
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 export async function generateOnboardingTasks(
   clienteNome: string,
   servico: string,
@@ -358,5 +358,38 @@ Retorne APENAS uma frase útil sugerindo foco ou dando um alerta amigável. Não
     return rawContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
   } catch (err) {
     return 'Dica: Organize suas prioridades do dia no Kanban para manter o fluxo.';
+  }
+}
+
+// ===== NOVO: Geração de Imagens via ChatGPT (DALL-E) =====
+export async function generateImage(promptText: string): Promise<string> {
+  if (!OPENAI_API_KEY) {
+    throw new Error('Chave da API do OpenAI não configurada. Defina VITE_OPENAI_API_KEY.');
+  }
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: promptText,
+        n: 1,
+        size: '1024x1024'
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Erro ao gerar imagem na API do OpenAI');
+    }
+
+    return data.data[0].url;
+  } catch (err) {
+    console.error('Falha ao gerar imagem:', err);
+    throw err;
   }
 }

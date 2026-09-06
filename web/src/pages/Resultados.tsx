@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext';
-import { TrendingUp, Users, Eye, Target, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { TrendingUp, Users, Eye, Target, Edit2, Trash2, ArrowUpRight, ArrowDownRight, Minus, Download } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ModalNovaMetrica } from '../components/Modals';
@@ -119,6 +120,23 @@ export default function ResultadosPage() {
     return <Badge variant="outline" className="bg-zinc-500/10 text-zinc-400 border-zinc-500/20 text-[10px] py-0"><Minus className="w-3 h-3 mr-0.5" />0%</Badge>;
   };
 
+  const handleExportPDF = (clienteNome: string, elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    // We create a temporary wrapper to apply some specific styles for PDF if needed
+    // but usually html2pdf handles it out of the box.
+    const opt = {
+      margin:       0.5,
+      filename:     `Relatorio_Evolucao_${clienteNome.replace(/\s+/g, '_')}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#09090b' },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       
@@ -177,7 +195,7 @@ export default function ResultadosPage() {
           }));
 
           return (
-            <Card key={clienteId} className="bg-zinc-900/80 border-zinc-800 rounded-3xl shadow-xl overflow-hidden">
+            <Card key={clienteId} id={`client-card-${clienteId}`} className="bg-zinc-900/80 border-zinc-800 rounded-3xl shadow-xl overflow-hidden">
               <CardHeader className="pb-4 pt-6 px-6 border-b border-zinc-800/50 flex flex-row items-center justify-between bg-zinc-950/20">
                 <div>
                   <div className="flex items-center gap-3">
@@ -207,6 +225,14 @@ export default function ResultadosPage() {
                         : 'Auto Sincronizar'}
                     </button>
                   )}
+                  <button 
+                    onClick={() => handleExportPDF(cliente?.nome || 'Cliente', `client-card-${clienteId}`)}
+                    className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold rounded-md bg-red-600/90 hover:bg-red-700 text-white transition-all shadow-[0_0_10px_rgba(220,38,38,0.3)]"
+                    title="Exportar para PDF"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    PDF
+                  </button>
                   {hasEvolution && (
                     <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-bold px-3 py-1">
                       Comparativo Histórico

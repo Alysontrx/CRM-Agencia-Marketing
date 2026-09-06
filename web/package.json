@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "start": "node server.js",
+    "start": "node --env-file=.env server.js",
     "render-build-backend": "npm install && npx playwright install chromium"
   },
   "dependencies": {
